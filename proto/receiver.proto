@@ -1,0 +1,106 @@
+// Синтаксис Protocol Buffers v3
+syntax = "proto3";
+
+// Пакет для Go
+package receiver;
+
+option go_package = "NavControl/proto";
+
+import "service.proto";
+
+
+// Сервис управления RECEIVER'ом
+service ReceiverControl {
+  // Получить статус сервиса
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+   // Получить количество активных подключений
+  rpc GetActiveConnectionsCount(GetClientsRequest) returns (GetActiveCount);
+
+  // Получить список подключенных клиентов
+  rpc GetConnectedClients(GetClientsRequest) returns (GetClientsResponse);
+
+  // Отключить клиента
+  rpc DisconnectClient(DisconnectClientRequest) returns (DisconnectClientResponse);
+
+    // Открыть порт (сделать active=true)
+  rpc OpenPort(PortIdentifier) returns (PortOperationResponse);
+
+  // Закрыть порт (сделать active=false)
+  rpc ClosePort(PortIdentifier) returns (PortOperationResponse);
+
+  // Добавить новый порт в конфигурацию 
+  rpc AddPort(PortDefinition) returns (PortOperationResponse);
+
+  // Удалить порт из конфигурации
+  rpc DeletePort(PortIdentifier) returns (PortOperationResponse);
+}
+
+message GetActiveCount{
+    int32 count = 1;
+}
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  repeated PortDefinition ports = 1;
+}
+
+
+message PortDefinition {
+    int32 id_receiver = 1;  // Уникальный идентификатор receiver
+    int32 id_sm = 2;        // Уникальный идентификатор SM
+    string ip_receiver = 3; // IP адрес receiver
+    bool is_active = 4;     // Активен ли receiver
+    string name = 5;        // Имя receiver
+    string key_nats = 6;    // топик NATS
+    int32 port_receiver = 7; // Номер порта receiver
+    string protocol = 8;     // Протокол receiver (EGTS, Arnavi, NDTP)
+    string ip_nats = 9;     // IP адрес NATS
+    int32 port_nats = 10;   // Номер порта NATS
+    string status = 11;     // Статус receiver
+    string description = 12; // Описание receiver
+}
+
+message PortStatusResponse {
+    string name = 1;    // "EGTS", "Arnavi", "NDTP"
+    int32 port_receiver = 2;     // Номер порта
+    string description = 3;
+}
+
+message PortStatusList {
+  repeated PortDefinition ports = 1;
+}
+
+
+
+message GetClientsRequest {
+  string protocol_name = 1;
+  int32 port_receiver =2;
+}
+
+message ClientInfo {
+  string address = 2;
+  string protocol_name = 3;
+}
+
+message GetClientsResponse {
+  repeated ClientInfo clients = 1;
+}
+
+message DisconnectClientRequest {
+  string protocol_name = 1;
+  string client_address = 2;
+}
+
+message DisconnectClientResponse {
+  bool success = 1;
+}
+
+message PortIdentifier {
+ int32 port_receiver = 1; // номер порта
+}
+
+message PortOperationResponse {
+  bool success = 1;
+  string message = 2; // Описание результата или ошибки
+  PortDefinition port_details = 3; // Детали созданного/измененного порта
+}
