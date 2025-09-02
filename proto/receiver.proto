@@ -2,7 +2,7 @@
 syntax = "proto3";
 
 // Пакет для Go
-package receiver;
+package proto;
 
 option go_package = "NavControl/proto";
 
@@ -11,6 +11,10 @@ import "service.proto";
 
 // Сервис управления RECEIVER'ом
 service ReceiverControl {
+
+   // Устанавливаем уровень логирования, используя общий запрос/ответ
+  rpc SetLogLevel(proto.SetLogLevelRequest) returns (proto.SetLogLevelResponse);
+ 
   // Получить статус сервиса
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
    // Получить количество активных подключений
