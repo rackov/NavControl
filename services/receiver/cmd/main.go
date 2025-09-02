@@ -2,46 +2,54 @@ package main
 
 import (
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/rackov/NavControl/pkg/models"
-	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
+	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/portmanager"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
 	// Создаем менеджер портов
 	pm := portmanager.NewPortManager()
 
-	// Создаем два экземпляра протокола Arnavi для разных портов
-	arnaviProtocol1 := arnavi.NewArnaviProtocol()
-	arnaviProtocol2 := arnavi.NewArnaviProtocol()
-
-	// Добавляем протоколы на разные порты
-	if err := pm.AddProtocol(8080, arnaviProtocol1); err != nil {
-		log.Fatalf("Failed to add Arnavi protocol on port 8080: %v", err)
+	// Добавляем порт с протоколом Arnavi
+	err := pm.AddPort(8080, "Arnavi", true, "Main Arnavi Port")
+	if err != nil {
+		log.Fatalf("Failed to add Arnavi port: %v", err)
 	}
 
-	if err := pm.AddProtocol(8081, arnaviProtocol2); err != nil {
-		log.Fatalf("Failed to add Arnavi protocol on port 8081: %v", err)
+	// Создаем и запускаем gRPC сервер
+	// grpcServer := portmanager.NewGRPCServer(pm)
+
+	// Создаем gRPC сервер ---------------  Регистрация для проверки
+	grpcServer := grpc.NewServer()
+
+	// Регистрируем наш сервис
+	grpcService := portmanager.NewGRPCServer(pm)
+	proto.RegisterReceiverControlServer(grpcServer, grpcService)
+
+	// Включаем reflection API
+	reflection.Register(grpcServer)
+	// ---------------  Регистрация для проверки
+
+	// Создаем слушателя для gRPC сервера
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	// Запускаем протоколы на их портах
-	if err := pm.StartProtocol(8080); err != nil {
-		log.Fatalf("Failed to start Arnavi protocol on port 8080: %v", err)
-	}
-
-	if err := pm.StartProtocol(8081); err != nil {
-		log.Fatalf("Failed to start Arnavi protocol on port 8081: %v", err)
-	}
-
-	// Выводим информацию о запущенных протоколах
-	info := pm.GetProtocolsInfo()
-	for port, protocolName := range info {
-		log.Printf("Protocol %s is running on port %d", protocolName, port)
-	}
+	go func() {
+		log.Printf("gRPC server started on port 50051")
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
+		}
+	}()
 
 	// Запускаем обработчик данных в отдельной горутине
 	go handleData(pm.GetDataChan())

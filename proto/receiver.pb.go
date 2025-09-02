@@ -439,8 +439,10 @@ func (x *GetClientsRequest) GetPortReceiver() int32 {
 
 type ClientInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Address       string                 `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
 	ProtocolName  string                 `protobuf:"bytes,3,opt,name=protocol_name,json=protocolName,proto3" json:"protocol_name,omitempty"`
+	ConnectTime   string                 `protobuf:"bytes,4,opt,name=connect_time,json=connectTime,proto3" json:"connect_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -475,6 +477,13 @@ func (*ClientInfo) Descriptor() ([]byte, []int) {
 	return file_receiver_proto_rawDescGZIP(), []int{7}
 }
 
+func (x *ClientInfo) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 func (x *ClientInfo) GetAddress() string {
 	if x != nil {
 		return x.Address
@@ -485,6 +494,13 @@ func (x *ClientInfo) GetAddress() string {
 func (x *ClientInfo) GetProtocolName() string {
 	if x != nil {
 		return x.ProtocolName
+	}
+	return ""
+}
+
+func (x *ClientInfo) GetConnectTime() string {
+	if x != nil {
+		return x.ConnectTime
 	}
 	return ""
 }
@@ -537,6 +553,7 @@ type DisconnectClientRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ProtocolName  string                 `protobuf:"bytes,1,opt,name=protocol_name,json=protocolName,proto3" json:"protocol_name,omitempty"`
 	ClientAddress string                 `protobuf:"bytes,2,opt,name=client_address,json=clientAddress,proto3" json:"client_address,omitempty"`
+	ClientId      string                 `protobuf:"bytes,3,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -585,9 +602,17 @@ func (x *DisconnectClientRequest) GetClientAddress() string {
 	return ""
 }
 
+func (x *DisconnectClientRequest) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
 type DisconnectClientResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // Описание результата или ошибки
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -627,6 +652,13 @@ func (x *DisconnectClientResponse) GetSuccess() bool {
 		return x.Success
 	}
 	return false
+}
+
+func (x *DisconnectClientResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
 }
 
 type PortIdentifier struct {
@@ -767,25 +799,30 @@ const file_receiver_proto_rawDesc = "" +
 	"\x05ports\x18\x01 \x03(\v2\x15.proto.PortDefinitionR\x05ports\"]\n" +
 	"\x11GetClientsRequest\x12#\n" +
 	"\rprotocol_name\x18\x01 \x01(\tR\fprotocolName\x12#\n" +
-	"\rport_receiver\x18\x02 \x01(\x05R\fportReceiver\"K\n" +
+	"\rport_receiver\x18\x02 \x01(\x05R\fportReceiver\"~\n" +
 	"\n" +
-	"ClientInfo\x12\x18\n" +
+	"ClientInfo\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\x12#\n" +
-	"\rprotocol_name\x18\x03 \x01(\tR\fprotocolName\"A\n" +
+	"\rprotocol_name\x18\x03 \x01(\tR\fprotocolName\x12!\n" +
+	"\fconnect_time\x18\x04 \x01(\tR\vconnectTime\"A\n" +
 	"\x12GetClientsResponse\x12+\n" +
-	"\aclients\x18\x01 \x03(\v2\x11.proto.ClientInfoR\aclients\"e\n" +
+	"\aclients\x18\x01 \x03(\v2\x11.proto.ClientInfoR\aclients\"\x82\x01\n" +
 	"\x17DisconnectClientRequest\x12#\n" +
 	"\rprotocol_name\x18\x01 \x01(\tR\fprotocolName\x12%\n" +
-	"\x0eclient_address\x18\x02 \x01(\tR\rclientAddress\"4\n" +
+	"\x0eclient_address\x18\x02 \x01(\tR\rclientAddress\x12\x1b\n" +
+	"\tclient_id\x18\x03 \x01(\tR\bclientId\"N\n" +
 	"\x18DisconnectClientResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"5\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"5\n" +
 	"\x0ePortIdentifier\x12#\n" +
 	"\rport_receiver\x18\x01 \x01(\x05R\fportReceiver\"\x85\x01\n" +
 	"\x15PortOperationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
-	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\xc6\x04\n" +
-	"\x0fReceiverControl\x12>\n" +
+	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\x8c\x05\n" +
+	"\x0fReceiverControl\x12D\n" +
+	"\vSetLogLevel\x12\x19.proto.SetLogLevelRequest\x1a\x1a.proto.SetLogLevelResponse\x12>\n" +
 	"\tGetStatus\x12\x17.proto.GetStatusRequest\x1a\x18.proto.GetStatusResponse\x12L\n" +
 	"\x19GetActiveConnectionsCount\x12\x18.proto.GetClientsRequest\x1a\x15.proto.GetActiveCount\x12J\n" +
 	"\x13GetConnectedClients\x12\x18.proto.GetClientsRequest\x1a\x19.proto.GetClientsResponse\x12S\n" +
@@ -823,30 +860,34 @@ var file_receiver_proto_goTypes = []any{
 	(*DisconnectClientResponse)(nil), // 10: proto.DisconnectClientResponse
 	(*PortIdentifier)(nil),           // 11: proto.PortIdentifier
 	(*PortOperationResponse)(nil),    // 12: proto.PortOperationResponse
+	(*SetLogLevelRequest)(nil),       // 13: proto.SetLogLevelRequest
+	(*SetLogLevelResponse)(nil),      // 14: proto.SetLogLevelResponse
 }
 var file_receiver_proto_depIdxs = []int32{
 	3,  // 0: proto.GetStatusResponse.ports:type_name -> proto.PortDefinition
 	3,  // 1: proto.PortStatusList.ports:type_name -> proto.PortDefinition
 	7,  // 2: proto.GetClientsResponse.clients:type_name -> proto.ClientInfo
 	3,  // 3: proto.PortOperationResponse.port_details:type_name -> proto.PortDefinition
-	1,  // 4: proto.ReceiverControl.GetStatus:input_type -> proto.GetStatusRequest
-	6,  // 5: proto.ReceiverControl.GetActiveConnectionsCount:input_type -> proto.GetClientsRequest
-	6,  // 6: proto.ReceiverControl.GetConnectedClients:input_type -> proto.GetClientsRequest
-	9,  // 7: proto.ReceiverControl.DisconnectClient:input_type -> proto.DisconnectClientRequest
-	11, // 8: proto.ReceiverControl.OpenPort:input_type -> proto.PortIdentifier
-	11, // 9: proto.ReceiverControl.ClosePort:input_type -> proto.PortIdentifier
-	3,  // 10: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
-	11, // 11: proto.ReceiverControl.DeletePort:input_type -> proto.PortIdentifier
-	2,  // 12: proto.ReceiverControl.GetStatus:output_type -> proto.GetStatusResponse
-	0,  // 13: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
-	8,  // 14: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
-	10, // 15: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
-	12, // 16: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
-	12, // 17: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
-	12, // 18: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
-	12, // 19: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
-	12, // [12:20] is the sub-list for method output_type
-	4,  // [4:12] is the sub-list for method input_type
+	13, // 4: proto.ReceiverControl.SetLogLevel:input_type -> proto.SetLogLevelRequest
+	1,  // 5: proto.ReceiverControl.GetStatus:input_type -> proto.GetStatusRequest
+	6,  // 6: proto.ReceiverControl.GetActiveConnectionsCount:input_type -> proto.GetClientsRequest
+	6,  // 7: proto.ReceiverControl.GetConnectedClients:input_type -> proto.GetClientsRequest
+	9,  // 8: proto.ReceiverControl.DisconnectClient:input_type -> proto.DisconnectClientRequest
+	11, // 9: proto.ReceiverControl.OpenPort:input_type -> proto.PortIdentifier
+	11, // 10: proto.ReceiverControl.ClosePort:input_type -> proto.PortIdentifier
+	3,  // 11: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
+	11, // 12: proto.ReceiverControl.DeletePort:input_type -> proto.PortIdentifier
+	14, // 13: proto.ReceiverControl.SetLogLevel:output_type -> proto.SetLogLevelResponse
+	2,  // 14: proto.ReceiverControl.GetStatus:output_type -> proto.GetStatusResponse
+	0,  // 15: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
+	8,  // 16: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
+	10, // 17: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
+	12, // 18: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
+	12, // 19: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
+	12, // 20: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
+	12, // 21: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
+	13, // [13:22] is the sub-list for method output_type
+	4,  // [4:13] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name

@@ -82,8 +82,10 @@ message GetClientsRequest {
 }
 
 message ClientInfo {
+  string id = 1;
   string address = 2;
   string protocol_name = 3;
+  string connect_time = 4;
 }
 
 message GetClientsResponse {
@@ -93,10 +95,12 @@ message GetClientsResponse {
 message DisconnectClientRequest {
   string protocol_name = 1;
   string client_address = 2;
+  string client_id = 3;
 }
 
 message DisconnectClientResponse {
   bool success = 1;
+  string message = 2; // Описание результата или ошибки
 }
 
 message PortIdentifier {

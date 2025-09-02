@@ -23,6 +23,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ReceiverControl_SetLogLevel_FullMethodName               = "/proto.ReceiverControl/SetLogLevel"
 	ReceiverControl_GetStatus_FullMethodName                 = "/proto.ReceiverControl/GetStatus"
 	ReceiverControl_GetActiveConnectionsCount_FullMethodName = "/proto.ReceiverControl/GetActiveConnectionsCount"
 	ReceiverControl_GetConnectedClients_FullMethodName       = "/proto.ReceiverControl/GetConnectedClients"
@@ -39,6 +40,8 @@ const (
 //
 // Сервис управления RECEIVER'ом
 type ReceiverControlClient interface {
+	// Устанавливаем уровень логирования, используя общий запрос/ответ
+	SetLogLevel(ctx context.Context, in *SetLogLevelRequest, opts ...grpc.CallOption) (*SetLogLevelResponse, error)
 	// Получить статус сервиса
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 	// Получить количество активных подключений
@@ -63,6 +66,16 @@ type receiverControlClient struct {
 
 func NewReceiverControlClient(cc grpc.ClientConnInterface) ReceiverControlClient {
 	return &receiverControlClient{cc}
+}
+
+func (c *receiverControlClient) SetLogLevel(ctx context.Context, in *SetLogLevelRequest, opts ...grpc.CallOption) (*SetLogLevelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetLogLevelResponse)
+	err := c.cc.Invoke(ctx, ReceiverControl_SetLogLevel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *receiverControlClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error) {
@@ -151,6 +164,8 @@ func (c *receiverControlClient) DeletePort(ctx context.Context, in *PortIdentifi
 //
 // Сервис управления RECEIVER'ом
 type ReceiverControlServer interface {
+	// Устанавливаем уровень логирования, используя общий запрос/ответ
+	SetLogLevel(context.Context, *SetLogLevelRequest) (*SetLogLevelResponse, error)
 	// Получить статус сервиса
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	// Получить количество активных подключений
@@ -177,6 +192,9 @@ type ReceiverControlServer interface {
 // pointer dereference when methods are called.
 type UnimplementedReceiverControlServer struct{}
 
+func (UnimplementedReceiverControlServer) SetLogLevel(context.Context, *SetLogLevelRequest) (*SetLogLevelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetLogLevel not implemented")
+}
 func (UnimplementedReceiverControlServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
 }
@@ -220,6 +238,24 @@ func RegisterReceiverControlServer(s grpc.ServiceRegistrar, srv ReceiverControlS
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ReceiverControl_ServiceDesc, srv)
+}
+
+func _ReceiverControl_SetLogLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetLogLevelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReceiverControlServer).SetLogLevel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReceiverControl_SetLogLevel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReceiverControlServer).SetLogLevel(ctx, req.(*SetLogLevelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ReceiverControl_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -373,6 +409,10 @@ var ReceiverControl_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.ReceiverControl",
 	HandlerType: (*ReceiverControlServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "SetLogLevel",
+			Handler:    _ReceiverControl_SetLogLevel_Handler,
+		},
 		{
 			MethodName: "GetStatus",
 			Handler:    _ReceiverControl_GetStatus_Handler,
