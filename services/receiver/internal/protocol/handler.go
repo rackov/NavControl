@@ -1,20 +1,19 @@
 package protocol
 
 import (
-	"context"
-	"net"
-
-	"github.com/nats-io/nats.go"
-	"github.com/rackov/NavControlSystem/pkg/logger"
+	"github.com/rackov/NavControl/pkg/models"
 )
 
-// Handler определяет интерфейс для обработчика протокола
-type Handler interface {
-	Process()
-	SendCommand(cmd []byte) error
-	Close() error
-}
+// NavigationProtocol определяет контракт для всех навигационных протоколов.
+// Любой протокол (Arnavi, EGTS, NDTP) должен реализовать все эти методы.
+type NavigationProtocol interface {
+	// GetName возвращает имя протокола (например, "EGTS").
+	GetName() string
 
-// Constructor - это тип для функции-конструктора обработчика.
-// Пакеты, которые реализуют Handler, будут предоставлять такую функцию.
-type Constructor func(conn net.Conn, nc *nats.Conn, topic string, log *logger.Logger, ctx context.Context) Handler
+	// Start запускает TCP-сервер для прослушивания входящих соединений.
+	// Принимает канал, в который будут отправляться распарсенные данные.
+	Start(port int, dataChan chan<- models.NavRecord) error
+
+	// Stop останавливает TCP-сервер и освобождает ресурсы.
+	Stop() error
+}
