@@ -8,6 +8,7 @@ package proto
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -19,7 +20,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	LoggingControl_GetLogLevel_FullMethodName = "/proto.LoggingControl/GetLogLevel"
 	LoggingControl_SetLogLevel_FullMethodName = "/proto.LoggingControl/SetLogLevel"
+	LoggingControl_ReadLogs_FullMethodName    = "/proto.LoggingControl/ReadLogs"
 )
 
 // LoggingControlClient is the client API for LoggingControl service.
@@ -28,7 +31,12 @@ const (
 //
 // Общий сервис для управления логированием на любом из сервисов
 type LoggingControlClient interface {
+	// Получить текущий уровень логирования
+	GetLogLevel(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*LogLevelResponse, error)
+	// Установить уровень логирования
 	SetLogLevel(ctx context.Context, in *SetLogLevelRequest, opts ...grpc.CallOption) (*SetLogLevelResponse, error)
+	// ReadLogs читает логи с применением фильтров
+	ReadLogs(ctx context.Context, in *ReadLogsRequest, opts ...grpc.CallOption) (*ReadLogsResponse, error)
 }
 
 type loggingControlClient struct {
@@ -37,6 +45,16 @@ type loggingControlClient struct {
 
 func NewLoggingControlClient(cc grpc.ClientConnInterface) LoggingControlClient {
 	return &loggingControlClient{cc}
+}
+
+func (c *loggingControlClient) GetLogLevel(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*LogLevelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LogLevelResponse)
+	err := c.cc.Invoke(ctx, LoggingControl_GetLogLevel_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *loggingControlClient) SetLogLevel(ctx context.Context, in *SetLogLevelRequest, opts ...grpc.CallOption) (*SetLogLevelResponse, error) {
@@ -49,13 +67,28 @@ func (c *loggingControlClient) SetLogLevel(ctx context.Context, in *SetLogLevelR
 	return out, nil
 }
 
+func (c *loggingControlClient) ReadLogs(ctx context.Context, in *ReadLogsRequest, opts ...grpc.CallOption) (*ReadLogsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReadLogsResponse)
+	err := c.cc.Invoke(ctx, LoggingControl_ReadLogs_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LoggingControlServer is the server API for LoggingControl service.
 // All implementations must embed UnimplementedLoggingControlServer
 // for forward compatibility.
 //
 // Общий сервис для управления логированием на любом из сервисов
 type LoggingControlServer interface {
+	// Получить текущий уровень логирования
+	GetLogLevel(context.Context, *empty.Empty) (*LogLevelResponse, error)
+	// Установить уровень логирования
 	SetLogLevel(context.Context, *SetLogLevelRequest) (*SetLogLevelResponse, error)
+	// ReadLogs читает логи с применением фильтров
+	ReadLogs(context.Context, *ReadLogsRequest) (*ReadLogsResponse, error)
 	mustEmbedUnimplementedLoggingControlServer()
 }
 
@@ -66,8 +99,14 @@ type LoggingControlServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLoggingControlServer struct{}
 
+func (UnimplementedLoggingControlServer) GetLogLevel(context.Context, *empty.Empty) (*LogLevelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLogLevel not implemented")
+}
 func (UnimplementedLoggingControlServer) SetLogLevel(context.Context, *SetLogLevelRequest) (*SetLogLevelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetLogLevel not implemented")
+}
+func (UnimplementedLoggingControlServer) ReadLogs(context.Context, *ReadLogsRequest) (*ReadLogsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReadLogs not implemented")
 }
 func (UnimplementedLoggingControlServer) mustEmbedUnimplementedLoggingControlServer() {}
 func (UnimplementedLoggingControlServer) testEmbeddedByValue()                        {}
@@ -90,6 +129,24 @@ func RegisterLoggingControlServer(s grpc.ServiceRegistrar, srv LoggingControlSer
 	s.RegisterService(&LoggingControl_ServiceDesc, srv)
 }
 
+func _LoggingControl_GetLogLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LoggingControlServer).GetLogLevel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LoggingControl_GetLogLevel_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LoggingControlServer).GetLogLevel(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _LoggingControl_SetLogLevel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetLogLevelRequest)
 	if err := dec(in); err != nil {
@@ -108,6 +165,24 @@ func _LoggingControl_SetLogLevel_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LoggingControl_ReadLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReadLogsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LoggingControlServer).ReadLogs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LoggingControl_ReadLogs_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LoggingControlServer).ReadLogs(ctx, req.(*ReadLogsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LoggingControl_ServiceDesc is the grpc.ServiceDesc for LoggingControl service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -116,116 +191,16 @@ var LoggingControl_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*LoggingControlServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "GetLogLevel",
+			Handler:    _LoggingControl_GetLogLevel_Handler,
+		},
+		{
 			MethodName: "SetLogLevel",
 			Handler:    _LoggingControl_SetLogLevel_Handler,
 		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "service.proto",
-}
-
-const (
-	LogReader_ReadLogs_FullMethodName = "/proto.LogReader/ReadLogs"
-)
-
-// LogReaderClient is the client API for LogReader service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-//
-// Сервис для удаленного чтения логов
-type LogReaderClient interface {
-	// ReadLogs читает логи с применением фильтров
-	ReadLogs(ctx context.Context, in *ReadLogsRequest, opts ...grpc.CallOption) (*ReadLogsResponse, error)
-}
-
-type logReaderClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewLogReaderClient(cc grpc.ClientConnInterface) LogReaderClient {
-	return &logReaderClient{cc}
-}
-
-func (c *logReaderClient) ReadLogs(ctx context.Context, in *ReadLogsRequest, opts ...grpc.CallOption) (*ReadLogsResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ReadLogsResponse)
-	err := c.cc.Invoke(ctx, LogReader_ReadLogs_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// LogReaderServer is the server API for LogReader service.
-// All implementations must embed UnimplementedLogReaderServer
-// for forward compatibility.
-//
-// Сервис для удаленного чтения логов
-type LogReaderServer interface {
-	// ReadLogs читает логи с применением фильтров
-	ReadLogs(context.Context, *ReadLogsRequest) (*ReadLogsResponse, error)
-	mustEmbedUnimplementedLogReaderServer()
-}
-
-// UnimplementedLogReaderServer must be embedded to have
-// forward compatible implementations.
-//
-// NOTE: this should be embedded by value instead of pointer to avoid a nil
-// pointer dereference when methods are called.
-type UnimplementedLogReaderServer struct{}
-
-func (UnimplementedLogReaderServer) ReadLogs(context.Context, *ReadLogsRequest) (*ReadLogsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReadLogs not implemented")
-}
-func (UnimplementedLogReaderServer) mustEmbedUnimplementedLogReaderServer() {}
-func (UnimplementedLogReaderServer) testEmbeddedByValue()                   {}
-
-// UnsafeLogReaderServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LogReaderServer will
-// result in compilation errors.
-type UnsafeLogReaderServer interface {
-	mustEmbedUnimplementedLogReaderServer()
-}
-
-func RegisterLogReaderServer(s grpc.ServiceRegistrar, srv LogReaderServer) {
-	// If the following call pancis, it indicates UnimplementedLogReaderServer was
-	// embedded by pointer and is nil.  This will cause panics if an
-	// unimplemented method is ever invoked, so we test this at initialization
-	// time to prevent it from happening at runtime later due to I/O.
-	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
-		t.testEmbeddedByValue()
-	}
-	s.RegisterService(&LogReader_ServiceDesc, srv)
-}
-
-func _LogReader_ReadLogs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ReadLogsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LogReaderServer).ReadLogs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LogReader_ReadLogs_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LogReaderServer).ReadLogs(ctx, req.(*ReadLogsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// LogReader_ServiceDesc is the grpc.ServiceDesc for LogReader service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var LogReader_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.LogReader",
-	HandlerType: (*LogReaderServer)(nil),
-	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "ReadLogs",
-			Handler:    _LogReader_ReadLogs_Handler,
+			Handler:    _LoggingControl_ReadLogs_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

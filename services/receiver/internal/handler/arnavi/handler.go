@@ -4,11 +4,11 @@ package arnavi
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 )
@@ -30,16 +30,18 @@ type ArnaviProtocol struct {
 	clientsMu   sync.Mutex
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
+	logger      *logger.Logger
 }
 
 // NewArnaviProtocol создает новый экземпляр протокола Arnavi
-func NewArnaviProtocol() protocol.NavigationProtocol {
+func NewArnaviProtocol(log *logger.Logger) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &ArnaviProtocol{
 		ctx:         ctx,
 		cancel:      cancel,
 		clients:     make(map[string]ClientInfo),
 		connections: make(map[net.Conn]struct{}),
+		logger:      log,
 	}
 }
 
@@ -56,7 +58,7 @@ func (a *ArnaviProtocol) Start(port int, dataChan chan<- models.NavRecord) error
 		return fmt.Errorf("failed to listen on port %d: %v", port, err)
 	}
 
-	log.Printf("%s protocol started on port %d", a.GetName(), port)
+	a.logger.Infof("%s protocol started on port %d", a.GetName(), port)
 
 	// Запускаем обработчик соединений в отдельной горутине
 	go a.handleConnections(dataChan)
@@ -77,7 +79,7 @@ func (a *ArnaviProtocol) handleConnections(dataChan chan<- models.NavRecord) {
 				if a.ctx.Err() != nil {
 					return
 				}
-				log.Printf("Error accepting connection: %v", err)
+				a.logger.Errorf("Error accepting connection: %v", err)
 				continue
 			}
 
@@ -121,7 +123,7 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, dataCh
 		delete(a.clients, clientID)
 		a.clientsMu.Unlock()
 
-		log.Printf("Client %s disconnected", clientID)
+		a.logger.Infof("Client %s disconnected", clientID)
 	}()
 
 	// В реальном приложении здесь был бы парсинг данных из протокола Arnavi
@@ -134,7 +136,7 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, dataCh
 	}
 
 	dataChan <- record
-	log.Printf("Sent test record from client %s", clientID)
+	a.logger.Infof("Sent test record from client %s", clientID)
 }
 
 // Stop останавливает TCP-сервер
@@ -157,7 +159,7 @@ func (a *ArnaviProtocol) Stop() error {
 		}
 	}
 
-	log.Printf("%s protocol stopped", a.GetName())
+	a.logger.Infof("%s protocol stopped", a.GetName())
 	return nil
 }
 

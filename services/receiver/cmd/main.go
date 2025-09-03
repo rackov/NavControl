@@ -2,21 +2,24 @@ package main
 
 import (
 	"log"
-	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
+	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
-	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/portmanager"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 func main() {
 	// Создаем менеджер портов
-	pm := portmanager.NewPortManager()
+	logDir := "/home/vladimir/go/project/NavControl/services/receiver/cmd/logs/"
+	logPath := filepath.Join(logDir, "receiver.log")
+	cfg := logger.Config{LogLevel: "debug",
+		LogFilePath: logPath, MaxSize: 100, MaxBackups: 3, MaxAge: 30, Compress: true}
+	log.Println(logDir)
+	pm := portmanager.NewPortManager(cfg)
 
 	// Добавляем порт с протоколом Arnavi
 	err := pm.AddPort(8080, "Arnavi", true, "Main Arnavi Port")
@@ -27,27 +30,13 @@ func main() {
 	// Создаем и запускаем gRPC сервер
 	// grpcServer := portmanager.NewGRPCServer(pm)
 
-	// Создаем gRPC сервер ---------------  Регистрация для проверки
-	grpcServer := grpc.NewServer()
-
 	// Регистрируем наш сервис
 	grpcService := portmanager.NewGRPCServer(pm)
-	proto.RegisterReceiverControlServer(grpcServer, grpcService)
 
-	// Включаем reflection API
-	reflection.Register(grpcServer)
-	// ---------------  Регистрация для проверки
-
-	// Создаем слушателя для gRPC сервера
-	lis, err := net.Listen("tcp", ":50051")
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
-	}
-
+	// Запускаем gRPC сервер в отдельной горутине
 	go func() {
-		log.Printf("gRPC server started on port 50051")
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
+		if err := grpcService.StartGRPCServer(50051); err != nil {
+			log.Fatalf("Failed to start gRPC server: %v", err)
 		}
 	}()
 

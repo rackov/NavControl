@@ -3,27 +3,33 @@ syntax = "proto3";
 package proto;
 
 option go_package = "NavControl/proto";
-
+import "google/protobuf/empty.proto";
 
 // Общий сервис для управления логированием на любом из сервисов
 service LoggingControl {
+  // Получить текущий уровень логирования
+  rpc GetLogLevel(google.protobuf.Empty) returns (LogLevelResponse);
+  // Установить уровень логирования
     rpc SetLogLevel(SetLogLevelRequest) returns (SetLogLevelResponse);
+    // ReadLogs читает логи с применением фильтров
+    rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
 }
-
+// Ответ с текущим уровнем логирования
+message LogLevelResponse {
+  string level = 1;
+  bool success = 2;
+  string message = 3;
+}
 // Эти сообщения теперь общие и могут использоваться в других .proto файлах
 message SetLogLevelRequest {
-  string level = 1;
+  string level = 1; // debug, info, warn, error, fatal, panic
 }
 
 message SetLogLevelResponse {
   bool success = 1;
 }
 
-// Сервис для удаленного чтения логов
-service LogReader {
-  // ReadLogs читает логи с применением фильтров
-  rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
-}
+
 // --- Сообщения для запроса и ответа логов ---
 
 // Запрос на чтение логов

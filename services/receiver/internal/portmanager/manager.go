@@ -3,16 +3,14 @@ package portmanager
 import (
 	"context"
 	"fmt"
-	"log"
-	"net"
-	"strconv"
+
 	"sync"
 
+	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
-	"google.golang.org/grpc"
 )
 
 // PortInfo содержит информацию о порте и его состоянии
@@ -31,17 +29,52 @@ type PortManager struct {
 	dataChan chan models.NavRecord
 	ctx      context.Context
 	cancel   context.CancelFunc
+	logger   *logger.Logger
 }
 
 // NewPortManager создает новый менеджер портов
-func NewPortManager() *PortManager {
+func NewPortManager(cfg logger.Config) *PortManager {
 	ctx, cancel := context.WithCancel(context.Background())
+	log, err := logger.NewLogger(cfg)
+	if err != nil {
+		fmt.Println(err)
+	}
 	return &PortManager{
 		ports:    make(map[int32]*PortInfo),
 		dataChan: make(chan models.NavRecord, 100),
 		ctx:      ctx,
 		cancel:   cancel,
+		logger:   log,
 	}
+}
+
+// ListPorts возвращает список всех портов с их состоянием
+func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	ports := make([]*proto.PortDefinition, 0, len(pm.ports))
+
+	for _, portInfo := range pm.ports {
+		// Получаем количество подключений для порта
+		var connectionsCount int32 = 0
+		if portInfo.Active {
+			if arnaviProto, ok := portInfo.ProtocolInstance.(*arnavi.ArnaviProtocol); ok {
+				clients := arnaviProto.GetClients()
+				connectionsCount = int32(len(clients))
+			}
+		}
+
+		ports = append(ports, &proto.PortDefinition{
+			PortReceiver:     portInfo.PortNumber,
+			Protocol:         portInfo.Protocol,
+			IsActive:         portInfo.Active,
+			Name:             portInfo.Name,
+			ConnectionsCount: connectionsCount,
+		})
+	}
+
+	return ports, nil
 }
 
 // AddPort добавляет порт в конфигурацию
@@ -58,7 +91,7 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 	var protocolInstance protocol.NavigationProtocol
 	switch protocolName {
 	case "Arnavi":
-		protocolInstance = arnavi.NewArnaviProtocol()
+		protocolInstance = arnavi.NewArnaviProtocol(pm.logger)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", protocolName)
 	}
@@ -73,7 +106,7 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 	}
 
 	pm.ports[portNumber] = portInfo
-	log.Printf("Added port %d with protocol %s", portNumber, protocolName)
+	pm.logger.Infof("Added port %d with protocol %s", portNumber, protocolName)
 
 	// Если порт должен быть активным, запускаем его
 	if active {
@@ -106,7 +139,7 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 	portInfo.Active = true
 	pm.mu.Unlock()
 
-	log.Printf("Started port %d", portNumber)
+	pm.logger.Infof("Started port %d", portNumber)
 	return nil
 }
 
@@ -133,7 +166,7 @@ func (pm *PortManager) StopPort(portNumber int32) error {
 	portInfo.Active = false
 	pm.mu.Unlock()
 
-	log.Printf("Stopped port %d", portNumber)
+	pm.logger.Infof("Stopped port %d", portNumber)
 	return nil
 }
 
@@ -156,7 +189,7 @@ func (pm *PortManager) DeletePort(portNumber int32) error {
 	}
 
 	delete(pm.ports, portNumber)
-	log.Printf("Deleted port %d", portNumber)
+	pm.logger.Infof("Deleted port %d", portNumber)
 	return nil
 }
 
@@ -271,7 +304,7 @@ func (pm *PortManager) DisconnectClient(clientID string) error {
 		if arnaviProto, ok := portInfo.ProtocolInstance.(*arnavi.ArnaviProtocol); ok {
 			err := arnaviProto.DisconnectClient(clientID)
 			if err == nil {
-				log.Printf("Disconnected client %s", clientID)
+				pm.logger.Infof("Disconnected client %s", clientID)
 				return nil
 			}
 		}
@@ -290,13 +323,13 @@ func (pm *PortManager) Stop() {
 	for portNumber, portInfo := range pm.ports {
 		if portInfo.Active {
 			if err := portInfo.ProtocolInstance.Stop(); err != nil {
-				log.Printf("Error stopping protocol on port %d: %v", portNumber, err)
+				pm.logger.Infof("Error stopping protocol on port %d: %v", portNumber, err)
 			}
 		}
 	}
 
 	close(pm.dataChan)
-	log.Println("Port manager stopped")
+	pm.logger.Infof("Port manager stopped")
 }
 
 // GetDataChan возвращает канал для получения навигационных данных
@@ -320,132 +353,4 @@ func (pm *PortManager) GetPortsInfo() []*proto.PortDefinition {
 	}
 
 	return ports
-}
-
-// GRPCServer реализует gRPC сервер
-type GRPCServer struct {
-	pm *PortManager
-	proto.UnimplementedReceiverControlServer
-}
-
-// NewGRPCServer создает новый gRPC сервер
-func NewGRPCServer(pm *PortManager) *GRPCServer {
-	return &GRPCServer{
-		pm: pm,
-	}
-}
-
-// GetActiveConnectionsCount возвращает количество активных подключений
-func (s *GRPCServer) GetActiveConnectionsCount(ctx context.Context, req *proto.GetClientsRequest) (*proto.GetActiveCount, error) {
-	count, err := s.pm.GetActiveConnectionsCount(req.PortReceiver)
-	if err != nil {
-		return nil, err
-	}
-
-	return &proto.GetActiveCount{Count: count}, nil
-}
-
-// GetConnectedClients возвращает список подключенных клиентов
-func (s *GRPCServer) GetConnectedClients(ctx context.Context, req *proto.GetClientsRequest) (*proto.GetClientsResponse, error) {
-	clients, err := s.pm.GetConnectedClients(req.PortReceiver)
-	if err != nil {
-		return nil, err
-	}
-
-	return &proto.GetClientsResponse{Clients: clients}, nil
-}
-
-// DisconnectClient отключает клиента
-func (s *GRPCServer) DisconnectClient(ctx context.Context, req *proto.DisconnectClientRequest) (*proto.DisconnectClientResponse, error) {
-	err := s.pm.DisconnectClient(req.ClientId)
-	if err != nil {
-		return &proto.DisconnectClientResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.DisconnectClientResponse{
-		Success: true,
-		Message: "Client disconnected successfully",
-	}, nil
-}
-
-// OpenPort открывает (активирует) порт
-func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
-	err := s.pm.StartPort(req.PortReceiver)
-	if err != nil {
-		return &proto.PortOperationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.PortOperationResponse{
-		Success: true,
-		Message: "Port opened successfully",
-	}, nil
-}
-
-// ClosePort закрывает (деактивирует) порт
-func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
-	err := s.pm.StopPort(req.PortReceiver)
-	if err != nil {
-		return &proto.PortOperationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.PortOperationResponse{
-		Success: true,
-		Message: "Port closed successfully",
-	}, nil
-}
-
-// AddPort добавляет новый порт в конфигурацию
-func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
-	err := s.pm.AddPort(req.PortReceiver, req.Protocol, req.IsActive, req.Name)
-	if err != nil {
-		return &proto.PortOperationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.PortOperationResponse{
-		Success: true,
-		Message: "Port added successfully",
-	}, nil
-}
-
-// DeletePort удаляет порт из конфигурации
-func (s *GRPCServer) DeletePort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
-	err := s.pm.DeletePort(req.PortReceiver)
-	if err != nil {
-		return &proto.PortOperationResponse{
-			Success: false,
-			Message: err.Error(),
-		}, nil
-	}
-
-	return &proto.PortOperationResponse{
-		Success: true,
-		Message: "Port deleted successfully",
-	}, nil
-}
-
-// StartGRPCServer запускает gRPC сервер
-func (s *GRPCServer) StartGRPCServer(port int) error {
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(port))
-	if err != nil {
-		return fmt.Errorf("failed to listen: %v", err)
-	}
-
-	grpcServer := grpc.NewServer()
-	proto.RegisterReceiverControlServer(grpcServer, s)
-
-	log.Printf("gRPC server started on port %d", port)
-
-	return grpcServer.Serve(lis)
 }

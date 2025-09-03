@@ -7,7 +7,7 @@ package proto;
 option go_package = "NavControl/proto";
 
 import "service.proto";
-
+import "google/protobuf/empty.proto";
 
 // Сервис управления RECEIVER'ом
 service ReceiverControl {
@@ -19,6 +19,9 @@ service ReceiverControl {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
    // Получить количество активных подключений
   rpc GetActiveConnectionsCount(GetClientsRequest) returns (GetActiveCount);
+
+  // Получить список портов
+  rpc ListPorts(google.protobuf.Empty) returns (ListPortsResponse);
 
   // Получить список подключенных клиентов
   rpc GetConnectedClients(GetClientsRequest) returns (GetClientsResponse);
@@ -62,8 +65,15 @@ message PortDefinition {
     int32 port_nats = 10;   // Номер порта NATS
     string status = 11;     // Статус receiver
     string description = 12; // Описание receiver
+    int32 connections_count=13;
 }
 
+// Ответ на запрос списка портов
+message ListPortsResponse {
+  repeated PortDefinition ports = 1;
+  bool success = 2;
+  string message = 3;
+}
 message PortStatusResponse {
     string name = 1;    // "EGTS", "Arnavi", "NDTP"
     int32 port_receiver = 2;     // Номер порта
