@@ -9,6 +9,7 @@ import (
 
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
+	"github.com/rackov/NavControl/pkg/monitoring"
 	"github.com/rackov/NavControl/services/receiver/internal/portmanager"
 )
 
@@ -19,6 +20,9 @@ func main() {
 	cfg := logger.Config{LogLevel: "debug",
 		LogFilePath: logPath, MaxSize: 100, MaxBackups: 3, MaxAge: 30, Compress: true}
 	log.Println(logDir)
+
+	// 4. Инициализация метрик Prometheus
+
 	pm := portmanager.NewPortManager(cfg)
 
 	// Добавляем порт с протоколом Arnavi
@@ -27,8 +31,12 @@ func main() {
 		log.Fatalf("Failed to add Arnavi port: %v", err)
 	}
 
-	// Создаем и запускаем gRPC сервер
-	// grpcServer := portmanager.NewGRPCServer(pm)
+	InitMetrics("receiver")
+	go func() {
+		if err := monitoring.StartMetricsServer(9092); err != nil {
+			log.Printf("Failed to start metrics server: %v", err)
+		}
+	}()
 
 	// Регистрируем наш сервис
 	grpcService := portmanager.NewGRPCServer(pm)
