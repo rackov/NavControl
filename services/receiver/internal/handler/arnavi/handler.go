@@ -3,15 +3,31 @@ package arnavi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 )
+
+var (
+	connectedDevices = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Name: "navcontrol_connected_devices_total",
+			Help: "Total number of currently connected devices",
+		},
+	)
+)
+
+func init() {
+	// Регистрация метрики в Prometheus
+	prometheus.MustRegister(connectedDevices)
+}
 
 // ClientInfo содержит информацию о подключенном клиенте
 type ClientInfo struct {
@@ -51,7 +67,7 @@ func (a *ArnaviProtocol) GetName() string {
 }
 
 // Start запускает TCP-сервер для приема данных
-func (a *ArnaviProtocol) Start(port int, dataChan chan<- models.NavRecord) error {
+func (a *ArnaviProtocol) Start(port int, nc models.NatsConf) error {
 	var err error
 	a.listener, err = net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
@@ -61,13 +77,13 @@ func (a *ArnaviProtocol) Start(port int, dataChan chan<- models.NavRecord) error
 	a.logger.Infof("%s protocol started on port %d", a.GetName(), port)
 
 	// Запускаем обработчик соединений в отдельной горутине
-	go a.handleConnections(dataChan)
+	go a.handleConnections(nc)
 
 	return nil
 }
 
 // handleConnections обрабатывает входящие соединения
-func (a *ArnaviProtocol) handleConnections(dataChan chan<- models.NavRecord) {
+func (a *ArnaviProtocol) handleConnections(nc models.NatsConf) {
 	for {
 		select {
 		case <-a.ctx.Done():
@@ -96,20 +112,21 @@ func (a *ArnaviProtocol) handleConnections(dataChan chan<- models.NavRecord) {
 				Protocol:    a.GetName(),
 				ConnectTime: time.Now().Format(time.RFC3339),
 			}
-
+			connectedDevices.Inc()
 			// Добавляем клиента в список
 			a.clientsMu.Lock()
 			a.clients[clientID] = clientInfo
 			a.clientsMu.Unlock()
 
 			// Обрабатываем соединение в отдельной горутине
-			go a.handleConnection(conn, clientID, dataChan)
+			go a.handleConnection(conn, clientID, nc)
 		}
 	}
 }
 
 // handleConnection обрабатывает одно соединение
-func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, dataChan chan<- models.NavRecord) {
+func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, nc models.NatsConf) {
+	a.logger.Infof("Client %s connected  Protocol: %s", clientID, a.GetName())
 	defer func() {
 		conn.Close()
 
@@ -123,6 +140,8 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, dataCh
 		delete(a.clients, clientID)
 		a.clientsMu.Unlock()
 
+		connectedDevices.Dec()
+
 		a.logger.Infof("Client %s disconnected", clientID)
 	}()
 
@@ -134,8 +153,18 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, dataCh
 		Client:   1,
 		PacketID: 1,
 	}
+	js, _ := json.Marshal(record)
 
-	dataChan <- record
+	_, err := nc.Nc.Request(nc.Topic, []byte(js), 2000*time.Millisecond)
+	if err != nil {
+		a.logger.Info("Nats error send: ", err.Error())
+		if nc.Nc != nil {
+			nc.Nc.Close()
+		}
+		return
+	}
+
+	// dataChan <- record
 	a.logger.Infof("Sent test record from client %s", clientID)
 }
 

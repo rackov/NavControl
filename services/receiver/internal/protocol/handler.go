@@ -12,7 +12,7 @@ type NavigationProtocol interface {
 
 	// Start запускает TCP-сервер для прослушивания входящих соединений.
 	// Принимает канал, в который будут отправляться распарсенные данные.
-	Start(port int, dataChan chan<- models.NavRecord) error
+	Start(port int, nc models.NatsConf) error
 
 	// Stop останавливает TCP-сервер и освобождает ресурсы.
 	Stop() error

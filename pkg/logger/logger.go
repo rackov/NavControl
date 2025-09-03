@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/rackov/NavControl/pkg/config"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -69,19 +70,9 @@ var (
 	once          sync.Once
 )
 
-// Config содержит все необходимые настройки для инициализации логгера.
-type Config struct {
-	LogLevel    string `toml:"log_level"`
-	LogFilePath string `toml:"log_file_path"`
-	MaxSize     int    `toml:"max_size"`
-	MaxBackups  int    `toml:"max_backups"`
-	MaxAge      int    `toml:"max_age"`
-	Compress    bool   `toml:"compress"`
-}
-
 // NewLogger создает и возвращает новый настроенный экземпляр Logger.
 // Это основная функция для создания логгера.
-func NewLogger(cfg Config) (*Logger, error) {
+func NewLogger(cfg config.ConfigLog) (*Logger, error) {
 	var l *Logger
 	var err error
 

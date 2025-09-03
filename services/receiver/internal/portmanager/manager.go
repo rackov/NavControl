@@ -3,9 +3,12 @@ package portmanager
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"sync"
 
+	"github.com/nats-io/nats.go"
+	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
@@ -24,28 +27,94 @@ type PortInfo struct {
 
 // PortManager управляет навигационными протоколами на разных портах
 type PortManager struct {
-	mu       sync.RWMutex
-	ports    map[int32]*PortInfo
-	dataChan chan models.NavRecord
-	ctx      context.Context
-	cancel   context.CancelFunc
-	logger   *logger.Logger
+	mu    sync.RWMutex
+	muCfg sync.RWMutex
+	ports map[int32]*PortInfo
+	// dataChan chan models.NavRecord
+	ctx    context.Context
+	cancel context.CancelFunc
+	cfg    *config.Services
+	logger *logger.Logger
+	nc     *nats.Conn
 }
 
 // NewPortManager создает новый менеджер портов
-func NewPortManager(cfg logger.Config) *PortManager {
+func NewPortManager(cfg *config.Services) *PortManager {
 	ctx, cancel := context.WithCancel(context.Background())
-	log, err := logger.NewLogger(cfg)
+	log, err := logger.NewLogger(cfg.LogConfig)
 	if err != nil {
 		fmt.Println(err)
 	}
 	return &PortManager{
-		ports:    make(map[int32]*PortInfo),
-		dataChan: make(chan models.NavRecord, 100),
-		ctx:      ctx,
-		cancel:   cancel,
-		logger:   log,
+		ports: make(map[int32]*PortInfo),
+		// dataChan: make(chan models.NavRecord, 100),
+		ctx:    ctx,
+		cancel: cancel,
+		logger: log,
+		cfg:    cfg,
 	}
+}
+
+// Start запускает менеджер портов
+func (pm *PortManager) Start() error {
+	nc, err := nats.Connect(pm.cfg.NatsAddress)
+	if err != nil {
+		return err
+	}
+	pm.logger.Info("NATS connected")
+	pm.nc = nc
+
+	// запуск портов согласно конфигурации
+	go func() {
+		for {
+			select {
+			case <-pm.ctx.Done():
+				pm.logger.Info("PortManager stopped")
+				pm.Stop()
+				return
+			// case data := <-pm.dataChan:
+			// 	// Отправляем данные на NATS
+			// 	// err := pm.nc.Publish(pm.natsTopic, data)
+			// 	pm.logger.Infof("Publishing data to NATS: %v", data)
+			default:
+				if pm.nc == nil || !pm.nc.IsConnected() {
+					pm.logger.Errorf("NATS connection lost, reconnecting...")
+					pm.reconect()
+				}
+				time.Sleep(time.Duration(pm.cfg.NatsTimeOut) * time.Second)
+
+			}
+		}
+	}()
+	return nil
+
+}
+func (pm *PortManager) reconect() {
+	pm.muCfg.Lock()
+	for i, r := range pm.cfg.Receivers {
+		if r.Active {
+			pm.StopPort(r.Port)
+			pm.cfg.Receivers[i].Status = "disconnected Nats"
+		}
+	}
+	pm.muCfg.Unlock()
+
+	nc, err := nats.Connect(pm.cfg.NatsAddress)
+	if err != nil {
+		pm.logger.Errorf("Error connecting to NATS: %v", err)
+		return
+	}
+	pm.nc = nc
+	pm.logger.Info("NATS connected")
+	pm.muCfg.Lock()
+	for i, r := range pm.cfg.Receivers {
+		if r.Active {
+			pm.StartPort(r.Port)
+			pm.cfg.Receivers[i].Status = "ok"
+		}
+	}
+	pm.muCfg.Unlock()
+
 }
 
 // ListPorts возвращает список всех портов с их состоянием
@@ -104,13 +173,22 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 		Name:             name,
 		ProtocolInstance: protocolInstance,
 	}
+	pm.muCfg.Lock()
+	pm.cfg.Receivers = append(pm.cfg.Receivers, config.Receiver{
+		Port:     portNumber,
+		Active:   active,
+		Protocol: protocolName,
+		Name:     name,
+		Status:   "ok",
+	})
+	pm.muCfg.Unlock()
 
 	pm.ports[portNumber] = portInfo
 	pm.logger.Infof("Added port %d with protocol %s", portNumber, protocolName)
-
+	nat := models.NatsConf{Nc: pm.nc, Topic: pm.cfg.NatsTopic}
 	// Если порт должен быть активным, запускаем его
 	if active {
-		return protocolInstance.Start(int(portNumber), pm.dataChan)
+		return protocolInstance.Start(int(portNumber), nat)
 	}
 
 	return nil
@@ -129,8 +207,9 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 	if portInfo.Active {
 		return fmt.Errorf("port %d is already active", portNumber)
 	}
+	nat := models.NatsConf{Nc: pm.nc, Topic: pm.cfg.NatsTopic}
 
-	err := portInfo.ProtocolInstance.Start(int(portNumber), pm.dataChan)
+	err := portInfo.ProtocolInstance.Start(int(portNumber), nat)
 	if err != nil {
 		return err
 	}
@@ -328,14 +407,13 @@ func (pm *PortManager) Stop() {
 		}
 	}
 
-	close(pm.dataChan)
 	pm.logger.Infof("Port manager stopped")
 }
 
 // GetDataChan возвращает канал для получения навигационных данных
-func (pm *PortManager) GetDataChan() <-chan models.NavRecord {
-	return pm.dataChan
-}
+// func (pm *PortManager) GetDataChan() <-chan models.NavRecord {
+// 	return pm.dataChan
+// }
 
 // GetPortsInfo возвращает информацию о всех портах
 func (pm *PortManager) GetPortsInfo() []*proto.PortDefinition {

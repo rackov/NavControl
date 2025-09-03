@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+
+	"github.com/nats-io/nats.go"
 )
 
 /*
@@ -81,4 +83,9 @@ type NavRecords struct {
 	PacketType int16       `json:"packet_type"`
 	PacketID   uint32      `json:"packet_id"`
 	RecNav     []NavRecord `json:"record"`
+}
+
+type NatsConf struct {
+	Nc    *nats.Conn
+	Topic string
 }
