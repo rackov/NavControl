@@ -22,7 +22,7 @@ type Services struct {
 // NewServices создает новую конфигурацию с значениями по умолчанию
 func NewServices() *Services {
 	return &Services{
-		NatsAddress: "nats://localhost:4222",
+		NatsAddress: "nats://192.168.194.242:4222",
 		NatsTopic:   "nav.data",
 		NatsTimeOut: 5,
 		LogConfig: ConfigLog{

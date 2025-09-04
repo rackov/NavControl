@@ -16,13 +16,13 @@ type TagsData struct {
 	// битовая маска наличия основных полей:
 	// lat=0001, lon=0011, Speed&sat&all = 00111
 	ListActive uint64    `json:"list_active"`
-	Latitude   int       `json:"lat"`
-	Longitude  int       `json:"lon"`
+	Latitude   uint32    `json:"lat"`
+	Longitude  uint32    `json:"lon"`
 	Speed      float32   `json:"speed"`
 	Satellites int       `json:"satellites"`
 	Altitude   int       `json:"altitude"`
 	Course     int       `json:"course"`
-	LL         [8]int    `json:"ll"`
+	LL         [8]uint32 `json:"ll"`
 	Data       []AllTags `json:"else_data"`
 }
 
@@ -44,12 +44,12 @@ func (r *TagsData) Decode(rec []byte) error {
 		case TagsLat:
 			var tLat float32
 			binary.Read(buf, binary.LittleEndian, &tLat)
-			r.Latitude = int(math.Round(float64(tLat)*1000000)) * 10
+			r.Latitude = uint32(math.Round(float64(tLat)*1000000)) * 10
 			r.ListActive = r.ListActive | 1
 		case TagsLon:
 			var tLon float32
 			binary.Read(buf, binary.LittleEndian, &tLon)
-			r.Longitude = int(math.Round(float64(tLon)*1000000)) * 10
+			r.Longitude = uint32(math.Round(float64(tLon)*1000000)) * 10
 			r.ListActive = r.ListActive | 2
 		case TagsSpeedCourse:
 			var tbyte byte
@@ -75,35 +75,35 @@ func (r *TagsData) Decode(rec []byte) error {
 		case TagsLL1:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[0] = int(tbyte)
+			r.LL[0] = uint32(tbyte)
 		case TagsLL2:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[1] = int(tbyte)
+			r.LL[1] = uint32(tbyte)
 		case TagsLL3:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[2] = int(tbyte)
+			r.LL[2] = uint32(tbyte)
 		case TagsLL4:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[3] = int(tbyte)
+			r.LL[3] = uint32(tbyte)
 		case TagsLL5:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[4] = int(tbyte)
+			r.LL[4] = uint32(tbyte)
 		case TagsLL6:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[5] = int(tbyte)
+			r.LL[5] = uint32(tbyte)
 		case TagsLL7:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[6] = int(tbyte)
+			r.LL[6] = uint32(tbyte)
 		case TagsLL8:
 			var tbyte uint16
 			binary.Read(buf, binary.LittleEndian, &tbyte)
-			r.LL[7] = int(tbyte)
+			r.LL[7] = uint32(tbyte)
 		default:
 			bytesTmpBuf := make([]byte, 4)
 			if _, err = buf.Read(bytesTmpBuf); err != nil {

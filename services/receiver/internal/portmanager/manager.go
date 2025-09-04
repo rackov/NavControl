@@ -13,6 +13,7 @@ import (
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
+	"github.com/rackov/NavControl/services/receiver/internal/handler/egts"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 )
 
@@ -161,6 +162,8 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 	switch protocolName {
 	case "Arnavi":
 		protocolInstance = arnavi.NewArnaviProtocol(pm.logger)
+	case "EGTS":
+		protocolInstance = egts.NewEgtsProtocol(pm.logger)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", protocolName)
 	}
@@ -293,6 +296,10 @@ func (pm *PortManager) GetActiveConnectionsCount(portNumber int32) (int32, error
 			clients := arnaviProto.GetClients()
 			return int32(len(clients)), nil
 		}
+		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+			clients := egtsProto.GetClients()
+			return int32(len(clients)), nil
+		}
 
 		return 0, fmt.Errorf("failed to get clients count for port %d", portNumber)
 	}
@@ -306,6 +313,10 @@ func (pm *PortManager) GetActiveConnectionsCount(portNumber int32) (int32, error
 
 		if arnaviProto, ok := portInfo.ProtocolInstance.(*arnavi.ArnaviProtocol); ok {
 			clients := arnaviProto.GetClients()
+			total += int32(len(clients))
+		}
+		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+			clients := egtsProto.GetClients()
 			total += int32(len(clients))
 		}
 	}
@@ -343,7 +354,17 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 				})
 			}
 		}
-
+		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+			egtsClients := egtsProto.GetClients()
+			for _, client := range egtsClients {
+				clients = append(clients, &proto.ClientInfo{
+					Id:           client.ID,
+					Address:      client.RemoteAddr,
+					ConnectTime:  client.ConnectTime,
+					ProtocolName: client.Protocol,
+				})
+			}
+		}
 		return clients, nil
 	}
 
@@ -364,6 +385,18 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 				})
 			}
 		}
+		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+			egtsClients := egtsProto.GetClients()
+			for _, client := range egtsClients {
+				clients = append(clients, &proto.ClientInfo{
+					Id:           client.ID,
+					Address:      client.RemoteAddr,
+					ConnectTime:  client.ConnectTime,
+					ProtocolName: client.Protocol,
+				})
+			}
+		}
+
 	}
 
 	return clients, nil
@@ -387,9 +420,17 @@ func (pm *PortManager) DisconnectClient(clientID string) error {
 				return nil
 			}
 		}
+		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+			err := egtsProto.DisconnectClient(clientID)
+			if err == nil {
+				pm.logger.Infof("Disconnected client %s", clientID)
+				return nil
+			}
+		}
 	}
 
 	return fmt.Errorf("client %s not found", clientID)
+
 }
 
 // Stop останавливает все протоколы и освобождает ресурсы

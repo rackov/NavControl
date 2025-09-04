@@ -202,7 +202,7 @@ func (s *GRPCServer) ReadLogs(ctx context.Context, req *proto.ReadLogsRequest) (
 	// Получаем логи с фильтрами
 
 	s.logger.Info("Reading logs")
-	logs, err := s.logger.ReadLogEnds(req.Level, req.StartDate, req.EndDate, req.Limit)
+	logs, err := s.logger.ReadLogs(req.Level, req.StartDate, req.EndDate, req.Limit)
 	if err != nil {
 		s.logger.Errorf("Failed to read logs: %v", err)
 		return &proto.ReadLogsResponse{

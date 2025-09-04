@@ -11,7 +11,7 @@ reflection.Register(s.grpcServer)
 grpcurl -plaintext -d '{
   "port_receiver": 8082,
   "protocol": "Arnavi",
-  "is_active": false,
+  "is_active": true,
   "name": "Test Scenario Port"
 }' localhost:50051 proto.ReceiverControl/AddPort
 
@@ -40,7 +40,7 @@ grpcurl -plaintext -d '{
 
 # 7. Отключаем клиента (используем ID из предыдущего запроса)
 grpcurl -plaintext -d '{
-  "client_id": "127.0.0.1:43444-1756878784"
+  "client_id": "127.0.0.1:45062-1756998166"
 }' localhost:50051 proto.ReceiverControl/DisconnectClient
 
 # 8. Закрываем порт
@@ -57,6 +57,9 @@ grpcurl -plaintext -d '{
 grpcurl -plaintext localhost:50051 proto.ReceiverControl/ListPorts
 
 
+grpcurl -plaintext -d '{
+    "limit": 100
+}' localhost:50051 proto.LoggingControl/ReadLogs
 
 grpcurl -plaintext -d '{
   "level": "info",
@@ -78,5 +81,15 @@ grpcurl -plaintext -d '{
 }' localhost:50051 proto.LoggingControl/ReadLogs
 
 grpcurl -plaintext -d '{
-    "limit": 100
-}' localhost:50051 proto.LoggingControl/ReadLogs
+    "level": "DEBUG"
+}' localhost:50051 proto.LoggingControl/SetLogLevel
+
+
+# 1. Добавляем порт
+grpcurl -plaintext -d '{
+  "port_receiver": 8082,
+  "protocol": "EGTS",
+  "is_active": true,
+  "name": "Test Scenario Port"
+}' localhost:50051 proto.ReceiverControl/AddPort
+
