@@ -117,7 +117,7 @@ func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortIdentifier) (
 
 // AddPort добавляет новый порт в конфигурацию
 func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
-	err := s.pm.AddPort(req.PortReceiver, req.Protocol, req.IsActive, req.Name)
+	err := s.pm.AddPort(req.PortReceiver, req.Protocol, req.Active, req.Name)
 	if err != nil {
 		return &proto.PortOperationResponse{
 			Success: false,

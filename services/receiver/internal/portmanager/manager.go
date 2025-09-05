@@ -66,6 +66,12 @@ func (pm *PortManager) Start() error {
 	pm.nc = nc
 
 	// запуск портов согласно конфигурации
+	for _, p := range pm.cfg.Receivers {
+		if p.Active {
+			pm.StartPort(p.Port)
+		}
+	}
+
 	go func() {
 		for {
 			select {
@@ -138,7 +144,7 @@ func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
 		ports = append(ports, &proto.PortDefinition{
 			PortReceiver:     portInfo.PortNumber,
 			Protocol:         portInfo.Protocol,
-			IsActive:         portInfo.Active,
+			Active:           portInfo.Active,
 			Name:             portInfo.Name,
 			ConnectionsCount: connectionsCount,
 		})
@@ -466,7 +472,7 @@ func (pm *PortManager) GetPortsInfo() []*proto.PortDefinition {
 		ports = append(ports, &proto.PortDefinition{
 			PortReceiver: portInfo.PortNumber,
 			Protocol:     portInfo.Protocol,
-			IsActive:     portInfo.Active,
+			Active:       portInfo.Active,
 			Name:         portInfo.Name,
 		})
 	}

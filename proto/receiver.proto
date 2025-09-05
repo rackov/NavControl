@@ -51,21 +51,17 @@ message GetStatusResponse {
   repeated PortDefinition ports = 1;
 }
 
-
 message PortDefinition {
     int32 id_receiver = 1;  // Уникальный идентификатор receiver
     int32 id_sm = 2;        // Уникальный идентификатор SM
     string ip_receiver = 3; // IP адрес receiver
-    bool is_active = 4;     // Активен ли receiver
+    bool active = 4;     // Активен ли receiver
     string name = 5;        // Имя receiver
-    string key_nats = 6;    // топик NATS
     int32 port_receiver = 7; // Номер порта receiver
     string protocol = 8;     // Протокол receiver (EGTS, Arnavi, NDTP)
-    string ip_nats = 9;     // IP адрес NATS
-    int32 port_nats = 10;   // Номер порта NATS
     string status = 11;     // Статус receiver
     string description = 12; // Описание receiver
-    int32 connections_count=13;
+    int32 connections_count=13; // Количество подключенных клиентов    
 }
 
 // Ответ на запрос списка портов
@@ -96,6 +92,7 @@ message ClientInfo {
   string address = 2;
   string protocol_name = 3;
   string connect_time = 4;
+  int32  last_time = 5;
 }
 
 message GetClientsResponse {

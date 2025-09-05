@@ -1,0 +1,42 @@
+// Синтаксис Protocol Buffers v3
+syntax = "proto3";
+
+// Пакет для Go
+package proto;
+
+option go_package = "NavControl/proto";
+
+import "service.proto";
+import "google/protobuf/empty.proto";
+
+message ServiceDefinition {
+    int32 id_sm = 1;        // Уникальный идентификатор SM
+    int32 port_sm = 2;      // Порт
+    string name = 3;        // Имя service 
+    string ip_broker = 4;     // IP адрес NATS
+    int32  port_broker= 5;   // Номер порта NATS
+    string topic_broker = 6;   // топик NATS    
+    string ip_receiver = 7;   // IP адрес receiver
+    bool   active = 8;       // Активен ли receiver
+    string status = 9;       // Статус receiver
+    string description = 10; // Описание receiver
+    string log_level=11;      // Уровень логирования  
+}
+
+message ServiceId {
+    int32 id_sm = 1;
+}
+
+message ChangeResponse {
+  bool success = 1;
+  string message = 2; // Описание результата или ошибки
+  ServiceDefinition service = 3;
+}
+
+service Manager {
+    rpc GetServices (google.protobuf.Empty) returns (ServiceDefinition);
+    rpc GetService (ServiceId) returns (ServiceDefinition);
+    rpc CreateService (ServiceDefinition) returns (ChangeResponse);
+    rpc UpdateService (ServiceDefinition) returns (ChangeResponse);
+    rpc DeleteService (ServiceId) returns (ChangeResponse);
+}
