@@ -154,7 +154,6 @@ type PortDefinition struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	IdReceiver       int32                  `protobuf:"varint,1,opt,name=id_receiver,json=idReceiver,proto3" json:"id_receiver,omitempty"`                    // Уникальный идентификатор receiver
 	IdSm             int32                  `protobuf:"varint,2,opt,name=id_sm,json=idSm,proto3" json:"id_sm,omitempty"`                                      // Уникальный идентификатор SM
-	IpReceiver       string                 `protobuf:"bytes,3,opt,name=ip_receiver,json=ipReceiver,proto3" json:"ip_receiver,omitempty"`                     // IP адрес receiver
 	Active           bool                   `protobuf:"varint,4,opt,name=active,proto3" json:"active,omitempty"`                                              // Активен ли receiver
 	Name             string                 `protobuf:"bytes,5,opt,name=name,proto3" json:"name,omitempty"`                                                   // Имя receiver
 	PortReceiver     int32                  `protobuf:"varint,7,opt,name=port_receiver,json=portReceiver,proto3" json:"port_receiver,omitempty"`              // Номер порта receiver
@@ -208,13 +207,6 @@ func (x *PortDefinition) GetIdSm() int32 {
 		return x.IdSm
 	}
 	return 0
-}
-
-func (x *PortDefinition) GetIpReceiver() string {
-	if x != nil {
-		return x.IpReceiver
-	}
-	return ""
 }
 
 func (x *PortDefinition) GetActive() bool {
@@ -715,50 +707,6 @@ func (x *DisconnectClientResponse) GetMessage() string {
 	return ""
 }
 
-type PortIdentifier struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PortReceiver  int32                  `protobuf:"varint,1,opt,name=port_receiver,json=portReceiver,proto3" json:"port_receiver,omitempty"` // номер порта
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *PortIdentifier) Reset() {
-	*x = PortIdentifier{}
-	mi := &file_receiver_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *PortIdentifier) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*PortIdentifier) ProtoMessage() {}
-
-func (x *PortIdentifier) ProtoReflect() protoreflect.Message {
-	mi := &file_receiver_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use PortIdentifier.ProtoReflect.Descriptor instead.
-func (*PortIdentifier) Descriptor() ([]byte, []int) {
-	return file_receiver_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *PortIdentifier) GetPortReceiver() int32 {
-	if x != nil {
-		return x.PortReceiver
-	}
-	return 0
-}
-
 type PortOperationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -770,7 +718,7 @@ type PortOperationResponse struct {
 
 func (x *PortOperationResponse) Reset() {
 	*x = PortOperationResponse{}
-	mi := &file_receiver_proto_msgTypes[13]
+	mi := &file_receiver_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +730,7 @@ func (x *PortOperationResponse) String() string {
 func (*PortOperationResponse) ProtoMessage() {}
 
 func (x *PortOperationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_receiver_proto_msgTypes[13]
+	mi := &file_receiver_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +743,7 @@ func (x *PortOperationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PortOperationResponse.ProtoReflect.Descriptor instead.
 func (*PortOperationResponse) Descriptor() ([]byte, []int) {
-	return file_receiver_proto_rawDescGZIP(), []int{13}
+	return file_receiver_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PortOperationResponse) GetSuccess() bool {
@@ -828,13 +776,11 @@ const file_receiver_proto_rawDesc = "" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\"\x12\n" +
 	"\x10GetStatusRequest\"@\n" +
 	"\x11GetStatusResponse\x12+\n" +
-	"\x05ports\x18\x01 \x03(\v2\x15.proto.PortDefinitionR\x05ports\"\xbb\x02\n" +
+	"\x05ports\x18\x01 \x03(\v2\x15.proto.PortDefinitionR\x05ports\"\x9a\x02\n" +
 	"\x0ePortDefinition\x12\x1f\n" +
 	"\vid_receiver\x18\x01 \x01(\x05R\n" +
 	"idReceiver\x12\x13\n" +
-	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\x12\x1f\n" +
-	"\vip_receiver\x18\x03 \x01(\tR\n" +
-	"ipReceiver\x12\x16\n" +
+	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\x12\x16\n" +
 	"\x06active\x18\x04 \x01(\bR\x06active\x12\x12\n" +
 	"\x04name\x18\x05 \x01(\tR\x04name\x12#\n" +
 	"\rport_receiver\x18\a \x01(\x05R\fportReceiver\x12\x1a\n" +
@@ -870,9 +816,7 @@ const file_receiver_proto_rawDesc = "" +
 	"\tclient_id\x18\x03 \x01(\tR\bclientId\"N\n" +
 	"\x18DisconnectClientResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"5\n" +
-	"\x0ePortIdentifier\x12#\n" +
-	"\rport_receiver\x18\x01 \x01(\x05R\fportReceiver\"\x85\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"\x85\x01\n" +
 	"\x15PortOperationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
@@ -884,11 +828,11 @@ const file_receiver_proto_rawDesc = "" +
 	"\tListPorts\x12\x16.google.protobuf.Empty\x1a\x18.proto.ListPortsResponse\x12J\n" +
 	"\x13GetConnectedClients\x12\x18.proto.GetClientsRequest\x1a\x19.proto.GetClientsResponse\x12S\n" +
 	"\x10DisconnectClient\x12\x1e.proto.DisconnectClientRequest\x1a\x1f.proto.DisconnectClientResponse\x12?\n" +
-	"\bOpenPort\x12\x15.proto.PortIdentifier\x1a\x1c.proto.PortOperationResponse\x12@\n" +
-	"\tClosePort\x12\x15.proto.PortIdentifier\x1a\x1c.proto.PortOperationResponse\x12>\n" +
+	"\bOpenPort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12@\n" +
+	"\tClosePort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12>\n" +
 	"\aAddPort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12A\n" +
 	"\n" +
-	"DeletePort\x12\x15.proto.PortIdentifier\x1a\x1c.proto.PortOperationResponseB\x12Z\x10NavControl/protob\x06proto3"
+	"DeletePort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponseB\x12Z\x10NavControl/protob\x06proto3"
 
 var (
 	file_receiver_proto_rawDescOnce sync.Once
@@ -902,7 +846,7 @@ func file_receiver_proto_rawDescGZIP() []byte {
 	return file_receiver_proto_rawDescData
 }
 
-var file_receiver_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_receiver_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_receiver_proto_goTypes = []any{
 	(*GetActiveCount)(nil),           // 0: proto.GetActiveCount
 	(*GetStatusRequest)(nil),         // 1: proto.GetStatusRequest
@@ -916,11 +860,10 @@ var file_receiver_proto_goTypes = []any{
 	(*GetClientsResponse)(nil),       // 9: proto.GetClientsResponse
 	(*DisconnectClientRequest)(nil),  // 10: proto.DisconnectClientRequest
 	(*DisconnectClientResponse)(nil), // 11: proto.DisconnectClientResponse
-	(*PortIdentifier)(nil),           // 12: proto.PortIdentifier
-	(*PortOperationResponse)(nil),    // 13: proto.PortOperationResponse
-	(*SetLogLevelRequest)(nil),       // 14: proto.SetLogLevelRequest
-	(*emptypb.Empty)(nil),            // 15: google.protobuf.Empty
-	(*SetLogLevelResponse)(nil),      // 16: proto.SetLogLevelResponse
+	(*PortOperationResponse)(nil),    // 12: proto.PortOperationResponse
+	(*SetLogLevelRequest)(nil),       // 13: proto.SetLogLevelRequest
+	(*emptypb.Empty)(nil),            // 14: google.protobuf.Empty
+	(*SetLogLevelResponse)(nil),      // 15: proto.SetLogLevelResponse
 }
 var file_receiver_proto_depIdxs = []int32{
 	3,  // 0: proto.GetStatusResponse.ports:type_name -> proto.PortDefinition
@@ -928,26 +871,26 @@ var file_receiver_proto_depIdxs = []int32{
 	3,  // 2: proto.PortStatusList.ports:type_name -> proto.PortDefinition
 	8,  // 3: proto.GetClientsResponse.clients:type_name -> proto.ClientInfo
 	3,  // 4: proto.PortOperationResponse.port_details:type_name -> proto.PortDefinition
-	14, // 5: proto.ReceiverControl.SetLogLevel:input_type -> proto.SetLogLevelRequest
+	13, // 5: proto.ReceiverControl.SetLogLevel:input_type -> proto.SetLogLevelRequest
 	1,  // 6: proto.ReceiverControl.GetStatus:input_type -> proto.GetStatusRequest
 	7,  // 7: proto.ReceiverControl.GetActiveConnectionsCount:input_type -> proto.GetClientsRequest
-	15, // 8: proto.ReceiverControl.ListPorts:input_type -> google.protobuf.Empty
+	14, // 8: proto.ReceiverControl.ListPorts:input_type -> google.protobuf.Empty
 	7,  // 9: proto.ReceiverControl.GetConnectedClients:input_type -> proto.GetClientsRequest
 	10, // 10: proto.ReceiverControl.DisconnectClient:input_type -> proto.DisconnectClientRequest
-	12, // 11: proto.ReceiverControl.OpenPort:input_type -> proto.PortIdentifier
-	12, // 12: proto.ReceiverControl.ClosePort:input_type -> proto.PortIdentifier
+	3,  // 11: proto.ReceiverControl.OpenPort:input_type -> proto.PortDefinition
+	3,  // 12: proto.ReceiverControl.ClosePort:input_type -> proto.PortDefinition
 	3,  // 13: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
-	12, // 14: proto.ReceiverControl.DeletePort:input_type -> proto.PortIdentifier
-	16, // 15: proto.ReceiverControl.SetLogLevel:output_type -> proto.SetLogLevelResponse
+	3,  // 14: proto.ReceiverControl.DeletePort:input_type -> proto.PortDefinition
+	15, // 15: proto.ReceiverControl.SetLogLevel:output_type -> proto.SetLogLevelResponse
 	2,  // 16: proto.ReceiverControl.GetStatus:output_type -> proto.GetStatusResponse
 	0,  // 17: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
 	4,  // 18: proto.ReceiverControl.ListPorts:output_type -> proto.ListPortsResponse
 	9,  // 19: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
 	11, // 20: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
-	13, // 21: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
-	13, // 22: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
-	13, // 23: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
-	13, // 24: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
+	12, // 21: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
+	12, // 22: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
+	12, // 23: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
+	12, // 24: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
 	15, // [15:25] is the sub-list for method output_type
 	5,  // [5:15] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
@@ -967,7 +910,7 @@ func file_receiver_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_receiver_proto_rawDesc), len(file_receiver_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

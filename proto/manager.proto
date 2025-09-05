@@ -16,10 +16,10 @@ message ServiceDefinition {
     string ip_broker = 4;     // IP адрес NATS
     int32  port_broker= 5;   // Номер порта NATS
     string topic_broker = 6;   // топик NATS    
-    string ip_receiver = 7;   // IP адрес receiver
-    bool   active = 8;       // Активен ли receiver
-    string status = 9;       // Статус receiver
-    string description = 10; // Описание receiver
+    string ip_sm = 7;   // IP адрес receiver
+    bool   active = 8;       // Активен ли
+    string status = 9;       // Статус 
+    string description = 10; // Описание 
     string log_level=11;      // Уровень логирования  
 }
 

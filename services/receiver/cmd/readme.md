@@ -9,10 +9,11 @@ reflection.Register(s.grpcServer)
 
 # 1. Добавляем порт
 grpcurl -plaintext -d '{
-  "port_receiver": 8082,
+  "port_receiver": 8085,
   "protocol": "Arnavi",
-  "is_active": true,
-  "name": "Test Scenario Port"
+  "active": true,
+  "name": "Test Scenario Port",
+  "description": "This is a test scenario port"
 }' localhost:50051 proto.ReceiverControl/AddPort
 
 # 2. Открываем порт

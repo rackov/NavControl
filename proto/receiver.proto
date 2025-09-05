@@ -30,16 +30,16 @@ service ReceiverControl {
   rpc DisconnectClient(DisconnectClientRequest) returns (DisconnectClientResponse);
 
     // Открыть порт (сделать active=true)
-  rpc OpenPort(PortIdentifier) returns (PortOperationResponse);
+  rpc OpenPort(PortDefinition) returns (PortOperationResponse);
 
   // Закрыть порт (сделать active=false)
-  rpc ClosePort(PortIdentifier) returns (PortOperationResponse);
+  rpc ClosePort(PortDefinition) returns (PortOperationResponse);
 
   // Добавить новый порт в конфигурацию 
   rpc AddPort(PortDefinition) returns (PortOperationResponse);
 
   // Удалить порт из конфигурации
-  rpc DeletePort(PortIdentifier) returns (PortOperationResponse);
+  rpc DeletePort(PortDefinition) returns (PortOperationResponse);
 }
 
 message GetActiveCount{
@@ -54,7 +54,6 @@ message GetStatusResponse {
 message PortDefinition {
     int32 id_receiver = 1;  // Уникальный идентификатор receiver
     int32 id_sm = 2;        // Уникальный идентификатор SM
-    string ip_receiver = 3; // IP адрес receiver
     bool active = 4;     // Активен ли receiver
     string name = 5;        // Имя receiver
     int32 port_receiver = 7; // Номер порта receiver
@@ -110,9 +109,9 @@ message DisconnectClientResponse {
   string message = 2; // Описание результата или ошибки
 }
 
-message PortIdentifier {
- int32 port_receiver = 1; // номер порта
-}
+// message PortIdentifier {
+//  int32 port_receiver = 1; // номер порта
+// }
 
 message PortOperationResponse {
   bool success = 1;

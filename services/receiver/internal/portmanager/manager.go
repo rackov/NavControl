@@ -34,13 +34,13 @@ type PortManager struct {
 	// dataChan chan models.NavRecord
 	ctx    context.Context
 	cancel context.CancelFunc
-	cfg    *config.Services
+	cfg    *config.ControlResiver
 	logger *logger.Logger
 	nc     *nats.Conn
 }
 
 // NewPortManager создает новый менеджер портов
-func NewPortManager(cfg *config.Services) *PortManager {
+func NewPortManager(cfg *config.ControlResiver) *PortManager {
 	ctx, cancel := context.WithCancel(context.Background())
 	log, err := logger.NewLogger(cfg.LogConfig)
 	if err != nil {
@@ -62,14 +62,13 @@ func (pm *PortManager) Start() error {
 	if err != nil {
 		return err
 	}
-	pm.logger.Info("NATS connected")
+	pm.logger.Infof("NATS connected : %s", pm.cfg.NatsAddress)
 	pm.nc = nc
 
 	// запуск портов согласно конфигурации
 	for _, p := range pm.cfg.Receivers {
-		if p.Active {
-			pm.StartPort(p.Port)
-		}
+		pm.logger.Infof("init port %d", p.PortReceiver)
+		pm.AddPort(int32(p.PortReceiver), p.Protocol, p.Active, p.Name)
 	}
 
 	go func() {
@@ -100,7 +99,7 @@ func (pm *PortManager) reconect() {
 	pm.muCfg.Lock()
 	for i, r := range pm.cfg.Receivers {
 		if r.Active {
-			pm.StopPort(r.Port)
+			pm.StopPort(int32(r.PortReceiver))
 			pm.cfg.Receivers[i].Status = "disconnected Nats"
 		}
 	}
@@ -116,7 +115,7 @@ func (pm *PortManager) reconect() {
 	pm.muCfg.Lock()
 	for i, r := range pm.cfg.Receivers {
 		if r.Active {
-			pm.StartPort(r.Port)
+			pm.StartPort(int32(r.PortReceiver))
 			pm.cfg.Receivers[i].Status = "ok"
 		}
 	}
@@ -182,15 +181,6 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 		Name:             name,
 		ProtocolInstance: protocolInstance,
 	}
-	pm.muCfg.Lock()
-	pm.cfg.Receivers = append(pm.cfg.Receivers, config.Receiver{
-		Port:     portNumber,
-		Active:   active,
-		Protocol: protocolName,
-		Name:     name,
-		Status:   "ok",
-	})
-	pm.muCfg.Unlock()
 
 	pm.ports[portNumber] = portInfo
 	pm.logger.Infof("Added port %d with protocol %s", portNumber, protocolName)
@@ -201,6 +191,67 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 	}
 
 	return nil
+}
+
+// Save config
+func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) error {
+
+	cfgrec := config.Receiver{}
+	newId := pm.newId()
+	index := pm.findPort(int(req.PortReceiver))
+	cfgrec.IdReceiver = int(req.IdReceiver) + 1
+	cfgrec.Active = req.Active
+	cfgrec.Name = req.Name
+	cfgrec.PortReceiver = int(req.PortReceiver)
+	cfgrec.Protocol = req.Protocol
+	cfgrec.Status = req.Status
+	cfgrec.Description = req.Description
+
+	pm.muCfg.Lock()
+	defer pm.muCfg.Unlock()
+	switch change {
+	case "add":
+		if req.IdReceiver != 0 {
+			cfgrec.IdReceiver = int(req.IdReceiver)
+		} else {
+			cfgrec.IdReceiver = newId
+		}
+		pm.cfg.Receivers = append(pm.cfg.Receivers, cfgrec)
+	case "edit":
+		if index != -1 {
+			pm.cfg.Receivers[index] = cfgrec
+		}
+	case "delete":
+		if index != -1 {
+			pm.cfg.Receivers = append(pm.cfg.Receivers[:index], pm.cfg.Receivers[index+1:]...)
+
+		}
+	}
+
+	return pm.cfg.SaveCfg(pm.cfg.Filename)
+}
+func (pm *PortManager) findPort(port int) (index int) {
+	pm.muCfg.RLock()
+	defer pm.muCfg.RUnlock()
+	index = -1
+	for _, r := range pm.cfg.Receivers {
+		if r.PortReceiver == port {
+			return index
+		}
+	}
+	return index
+}
+func (pm *PortManager) newId() int {
+	pm.muCfg.RLock()
+	defer pm.muCfg.RUnlock()
+	id := 0
+	for _, r := range pm.cfg.Receivers {
+		if r.IdReceiver > id {
+			id = r.IdReceiver
+		}
+	}
+	return id
+
 }
 
 // StartPort запускает протокол на указанном порту
@@ -452,9 +503,10 @@ func (pm *PortManager) Stop() {
 				pm.logger.Infof("Error stopping protocol on port %d: %v", portNumber, err)
 			}
 		}
+		pm.logger.Infof("Port %d stopped", portNumber)
 	}
 
-	pm.logger.Infof("Port manager stopped")
+	pm.logger.Infof("Port manager stopped all")
 }
 
 // GetDataChan возвращает канал для получения навигационных данных

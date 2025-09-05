@@ -84,7 +84,7 @@ func (s *GRPCServer) DisconnectClient(ctx context.Context, req *proto.Disconnect
 }
 
 // OpenPort открывает (активирует) порт
-func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
+func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
 	err := s.pm.StartPort(req.PortReceiver)
 	if err != nil {
 		return &proto.PortOperationResponse{
@@ -92,7 +92,12 @@ func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortIdentifier) (*
 			Message: err.Error(),
 		}, nil
 	}
-
+	if err = s.pm.SaveConfigPort("edit", req); err != nil {
+		return &proto.PortOperationResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
 	return &proto.PortOperationResponse{
 		Success: true,
 		Message: "Port opened successfully",
@@ -100,7 +105,7 @@ func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortIdentifier) (*
 }
 
 // ClosePort закрывает (деактивирует) порт
-func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
+func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
 	err := s.pm.StopPort(req.PortReceiver)
 	if err != nil {
 		return &proto.PortOperationResponse{
@@ -108,7 +113,12 @@ func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortIdentifier) (
 			Message: err.Error(),
 		}, nil
 	}
-
+	if err = s.pm.SaveConfigPort("edit", req); err != nil {
+		return &proto.PortOperationResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
 	return &proto.PortOperationResponse{
 		Success: true,
 		Message: "Port closed successfully",
@@ -124,7 +134,12 @@ func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*p
 			Message: err.Error(),
 		}, nil
 	}
-
+	if err = s.pm.SaveConfigPort("add", req); err != nil {
+		return &proto.PortOperationResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
 	return &proto.PortOperationResponse{
 		Success: true,
 		Message: "Port added successfully",
@@ -132,7 +147,7 @@ func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*p
 }
 
 // DeletePort удаляет порт из конфигурации
-func (s *GRPCServer) DeletePort(ctx context.Context, req *proto.PortIdentifier) (*proto.PortOperationResponse, error) {
+func (s *GRPCServer) DeletePort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
 	err := s.pm.DeletePort(req.PortReceiver)
 	if err != nil {
 		return &proto.PortOperationResponse{
@@ -140,7 +155,12 @@ func (s *GRPCServer) DeletePort(ctx context.Context, req *proto.PortIdentifier) 
 			Message: err.Error(),
 		}, nil
 	}
-
+	if err = s.pm.SaveConfigPort("delete", req); err != nil {
+		return &proto.PortOperationResponse{
+			Success: false,
+			Message: err.Error(),
+		}, nil
+	}
 	return &proto.PortOperationResponse{
 		Success: true,
 		Message: "Port deleted successfully",

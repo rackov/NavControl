@@ -34,10 +34,10 @@ type ServiceDefinition struct {
 	IpBroker      string                 `protobuf:"bytes,4,opt,name=ip_broker,json=ipBroker,proto3" json:"ip_broker,omitempty"`          // IP адрес NATS
 	PortBroker    int32                  `protobuf:"varint,5,opt,name=port_broker,json=portBroker,proto3" json:"port_broker,omitempty"`   // Номер порта NATS
 	TopicBroker   string                 `protobuf:"bytes,6,opt,name=topic_broker,json=topicBroker,proto3" json:"topic_broker,omitempty"` // топик NATS
-	IpReceiver    string                 `protobuf:"bytes,7,opt,name=ip_receiver,json=ipReceiver,proto3" json:"ip_receiver,omitempty"`    // IP адрес receiver
-	Active        bool                   `protobuf:"varint,8,opt,name=active,proto3" json:"active,omitempty"`                             // Активен ли receiver
-	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`                              // Статус receiver
-	Description   string                 `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`                   // Описание receiver
+	IpSm          string                 `protobuf:"bytes,7,opt,name=ip_sm,json=ipSm,proto3" json:"ip_sm,omitempty"`                      // IP адрес receiver
+	Active        bool                   `protobuf:"varint,8,opt,name=active,proto3" json:"active,omitempty"`                             // Активен ли
+	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`                              // Статус
+	Description   string                 `protobuf:"bytes,10,opt,name=description,proto3" json:"description,omitempty"`                   // Описание
 	LogLevel      string                 `protobuf:"bytes,11,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`         // Уровень логирования
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -115,9 +115,9 @@ func (x *ServiceDefinition) GetTopicBroker() string {
 	return ""
 }
 
-func (x *ServiceDefinition) GetIpReceiver() string {
+func (x *ServiceDefinition) GetIpSm() string {
 	if x != nil {
-		return x.IpReceiver
+		return x.IpSm
 	}
 	return ""
 }
@@ -258,7 +258,7 @@ var File_manager_proto protoreflect.FileDescriptor
 
 const file_manager_proto_rawDesc = "" +
 	"\n" +
-	"\rmanager.proto\x12\x05proto\x1a\rservice.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xc6\x02\n" +
+	"\rmanager.proto\x12\x05proto\x1a\rservice.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xba\x02\n" +
 	"\x11ServiceDefinition\x12\x13\n" +
 	"\x05id_sm\x18\x01 \x01(\x05R\x04idSm\x12\x17\n" +
 	"\aport_sm\x18\x02 \x01(\x05R\x06portSm\x12\x12\n" +
@@ -266,9 +266,8 @@ const file_manager_proto_rawDesc = "" +
 	"\tip_broker\x18\x04 \x01(\tR\bipBroker\x12\x1f\n" +
 	"\vport_broker\x18\x05 \x01(\x05R\n" +
 	"portBroker\x12!\n" +
-	"\ftopic_broker\x18\x06 \x01(\tR\vtopicBroker\x12\x1f\n" +
-	"\vip_receiver\x18\a \x01(\tR\n" +
-	"ipReceiver\x12\x16\n" +
+	"\ftopic_broker\x18\x06 \x01(\tR\vtopicBroker\x12\x13\n" +
+	"\x05ip_sm\x18\a \x01(\tR\x04ipSm\x12\x16\n" +
 	"\x06active\x18\b \x01(\bR\x06active\x12\x16\n" +
 	"\x06status\x18\t \x01(\tR\x06status\x12 \n" +
 	"\vdescription\x18\n" +
