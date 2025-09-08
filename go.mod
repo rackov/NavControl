@@ -3,6 +3,7 @@ module github.com/rackov/NavControl
 go 1.24.6
 
 require (
+	github.com/golang/protobuf v1.5.4
 	github.com/naoina/toml v0.1.1
 	github.com/nats-io/nats.go v1.45.0
 	github.com/prometheus/client_golang v1.23.0

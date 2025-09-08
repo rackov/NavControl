@@ -19,6 +19,11 @@ import (
 
 // PortInfo содержит информацию о порте и его состоянии
 type PortInfo struct {
+	IdReceiver       int32  // Уникальный идентификатор receiver
+	IdSm             int32  // Уникальный идентификатор SM
+	PortReceiver     int32  // Номер порта receiver
+	Status           string // Статус receiver
+	Description      string
 	PortNumber       int32
 	Protocol         string
 	Active           bool
@@ -65,10 +70,11 @@ func (pm *PortManager) Start() error {
 	pm.logger.Infof("NATS connected : %s", pm.cfg.NatsAddress)
 	pm.nc = nc
 
-	// запуск портов согласно конфигурации
+	// инициализация портов согласно конфигурации
 	for _, p := range pm.cfg.Receivers {
+		req := cfgToProto(p)
 		pm.logger.Infof("init port %d", p.PortReceiver)
-		pm.AddPort(int32(p.PortReceiver), p.Protocol, p.Active, p.Name)
+		pm.AddPort(req)
 	}
 
 	go func() {
@@ -94,6 +100,19 @@ func (pm *PortManager) Start() error {
 	}()
 	return nil
 
+}
+func cfgToProto(cfg config.Receiver) *proto.PortDefinition {
+	req := proto.PortDefinition{}
+	req.PortReceiver = int32(cfg.PortReceiver)
+	req.Protocol = cfg.Protocol
+	req.Active = cfg.Active
+	req.Name = cfg.Name
+	req.IdReceiver = int32(cfg.IdReceiver)
+	req.IdSm = int32(cfg.IdSm)
+	req.PortReceiver = int32(cfg.PortReceiver)
+	req.Description = cfg.Description
+	req.Status = cfg.Status
+	return &req
 }
 func (pm *PortManager) reconect() {
 	pm.muCfg.Lock()
@@ -122,6 +141,32 @@ func (pm *PortManager) reconect() {
 	pm.muCfg.Unlock()
 
 }
+func portInfoToProto(portInfo *PortInfo) *proto.PortDefinition {
+	return &proto.PortDefinition{
+		IdSm:         portInfo.IdSm,
+		IdReceiver:   portInfo.IdReceiver,
+		PortReceiver: portInfo.PortNumber,
+		Protocol:     portInfo.Protocol,
+		Active:       portInfo.Active,
+		Name:         portInfo.Name,
+		Description:  portInfo.Description,
+		Status:       portInfo.Status,
+	}
+}
+
+// Получить статус порта
+func (pm *PortManager) GetPortStatus(portNumber int32) (*proto.PortDefinition, error) {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+
+	portInfo, exists := pm.ports[portNumber]
+	if !exists {
+		return nil, fmt.Errorf("port %d not found", portNumber)
+	}
+
+	return portInfoToProto(portInfo), nil
+
+}
 
 // ListPorts возвращает список всех портов с их состоянием
 func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
@@ -139,24 +184,22 @@ func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
 				connectionsCount = int32(len(clients))
 			}
 		}
-
-		ports = append(ports, &proto.PortDefinition{
-			PortReceiver:     portInfo.PortNumber,
-			Protocol:         portInfo.Protocol,
-			Active:           portInfo.Active,
-			Name:             portInfo.Name,
-			ConnectionsCount: connectionsCount,
-		})
+		pdef := portInfoToProto(portInfo)
+		pdef.ConnectionsCount = connectionsCount
+		ports = append(ports, pdef)
 	}
 
 	return ports, nil
 }
 
 // AddPort добавляет порт в конфигурацию
-func (pm *PortManager) AddPort(portNumber int32, protocolName string, active bool, name string) error {
+func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
+
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
-
+	portNumber := req.PortReceiver
+	protocolName := req.Protocol
+	active := req.Active
 	// Проверяем, не занят ли уже этот порт
 	if _, exists := pm.ports[portNumber]; exists {
 		return fmt.Errorf("port %d is already in use", portNumber)
@@ -178,7 +221,12 @@ func (pm *PortManager) AddPort(portNumber int32, protocolName string, active boo
 		PortNumber:       portNumber,
 		Protocol:         protocolName,
 		Active:           active,
-		Name:             name,
+		Name:             req.Name,
+		IdReceiver:       req.IdReceiver,
+		IdSm:             req.IdSm,
+		PortReceiver:     req.PortReceiver,
+		Description:      req.Description,
+		Status:           req.Status,
 		ProtocolInstance: protocolInstance,
 	}
 
@@ -513,21 +561,3 @@ func (pm *PortManager) Stop() {
 // func (pm *PortManager) GetDataChan() <-chan models.NavRecord {
 // 	return pm.dataChan
 // }
-
-// GetPortsInfo возвращает информацию о всех портах
-func (pm *PortManager) GetPortsInfo() []*proto.PortDefinition {
-	pm.mu.RLock()
-	defer pm.mu.RUnlock()
-
-	ports := make([]*proto.PortDefinition, 0, len(pm.ports))
-	for _, portInfo := range pm.ports {
-		ports = append(ports, &proto.PortDefinition{
-			PortReceiver: portInfo.PortNumber,
-			Protocol:     portInfo.Protocol,
-			Active:       portInfo.Active,
-			Name:         portInfo.Name,
-		})
-	}
-
-	return ports
-}

@@ -1,6 +1,6 @@
 grpc_port = 50051
 metric_port = 9092
-nats_address = "nats://192.168.194.242:4222"
+nats_address = "nats://localhost:4222"
 nats_topic = "nav.data"
 nats_timeout = 5
 
@@ -19,7 +19,7 @@ active = false
 name = "Main Receiver"
 port_receiver = 8980
 protocol = "EGTS"
-status = "inactive"
+status = "ok"
 description = "Primary data receiver"
 connections_count = 0
 
@@ -30,30 +30,19 @@ active = true
 name = "Backup Receiver"
 port_receiver = 8981
 protocol = "EGTS"
-status = "active"
+status = "ok"
 description = "Backup data receiver"
 connections_count = 5
 
 [[receivers]]
 id_receiver = 3
-id_sm = 0
+id_sm = 1
 active = true
 name = "Test Scenario Port"
 port_receiver = 8082
 protocol = "Arnavi"
-status = ""
+status = "ok"
 description = ""
-connections_count = 0
-
-[[receivers]]
-id_receiver = 4
-id_sm = 0
-active = true
-name = "Test Scenario Port"
-port_receiver = 8081
-protocol = "Arnavi"
-status = ""
-description = "This is a test scenario port"
 connections_count = 0
 
 [[receivers]]
@@ -61,8 +50,9 @@ id_receiver = 4
 id_sm = 1
 active = true
 name = "Test Scenario Port"
-port_receiver = 8085
+port_receiver = 8081
 protocol = "Arnavi"
-status = ""
+status = "ok"
 description = "This is a test scenario port"
 connections_count = 0
+

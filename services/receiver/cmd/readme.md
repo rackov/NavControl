@@ -7,6 +7,9 @@ reflection.Register(s.grpcServer)
 
 # Установите grpcurl, если еще не установлен: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
+# 0 Сведения о сервисе
+grpcurl -plaintext localhost:50051 proto.ServiceInfo/GetInfo
+
 # 1. Добавляем порт
 grpcurl -plaintext -d '{
   "port_receiver": 8085,
@@ -57,6 +60,10 @@ grpcurl -plaintext -d '{
 # 10  Список портов
 grpcurl -plaintext localhost:50051 proto.ReceiverControl/ListPorts
 
+# 11. Статус порта
+grpcurl -plaintext -d '{
+  "port_receiver": 8082
+}' localhost:50051 proto.ReceiverControl/GetPortStatus
 
 grpcurl -plaintext -d '{
     "limit": 100

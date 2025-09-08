@@ -19,6 +19,35 @@ type GRPCServer struct {
 	logger *logger.Logger
 	proto.UnimplementedLoggingControlServer
 	proto.UnimplementedReceiverControlServer
+	proto.UnimplementedServiceInfoServer
+}
+
+func (s *GRPCServer) GetInfo(ctx context.Context, req *emptypb.Empty) (*proto.ServiceInfoResponse, error) {
+	return &proto.ServiceInfoResponse{
+		Name:           "RECEIVER",
+		Version:        "1.0.0",
+		Build:          "1",
+		BuildDate:      "2025-08-09",
+		GitHash:        "https://github.com/rackov/NavControl.git",
+		GitBranch:      "master",
+		GitState:       "clean",
+		GitSummary:     "clean",
+		GitDescription: "clean",
+		GitUrl:         "https://github.com/rackov/NavControl.git",
+		GitUser:        "rackov",
+		GitEmail:       "rackov@gmail.com",
+		GitRemote:      "https://github.com/rackov/NavControl.git",
+	}, nil
+}
+
+// Получить статус порта
+func (s *GRPCServer) GetPortStatus(ctx context.Context, req *proto.GetClientsRequest) (*proto.PortDefinition, error) {
+	status, err := s.pm.GetPortStatus(req.PortReceiver)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.pm.GetPortStatus(status.PortReceiver)
 }
 
 // ListPorts возвращает список всех портов с их состоянием
@@ -127,7 +156,7 @@ func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortDefinition) (
 
 // AddPort добавляет новый порт в конфигурацию
 func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
-	err := s.pm.AddPort(req.PortReceiver, req.Protocol, req.Active, req.Name)
+	err := s.pm.AddPort(req)
 	if err != nil {
 		return &proto.PortOperationResponse{
 			Success: false,
@@ -180,6 +209,7 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 	// Регистрируем сервисы
 	proto.RegisterReceiverControlServer(grpcServer, s)
 	proto.RegisterLoggingControlServer(grpcServer, s)
+	proto.RegisterServiceInfoServer(grpcServer, s)
 
 	// Включаем reflection API для отладки
 	reflection.Register(grpcServer)
