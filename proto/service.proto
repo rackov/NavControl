@@ -8,7 +8,17 @@ import "google/protobuf/empty.proto";
 // Общий сервис для получения информации о сервисе
 service ServiceInfo{
   rpc GetInfo(google.protobuf.Empty) returns (ServiceInfoResponse);
+
+// ----  сервис для управления логированием на любом из сервисов
+  // Получить текущий уровень логирования
+  rpc GetLogLevel(google.protobuf.Empty) returns (LogLevelResponse);
+  // Установить уровень логирования
+    rpc SetLogLevel(SetLogLevelRequest) returns (SetLogLevelResponse);
+    // ReadLogs читает логи с применением фильтров
+    rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
+
 }
+
 // Ответ с информацией о сервисе
 message ServiceInfoResponse{
   string name = 1;
@@ -25,6 +35,23 @@ message ServiceInfoResponse{
   string git_email = 12;
   string git_remote = 13;
 }
+
+
+message ServiceManager {
+    int32 id_sm = 1;
+    string ip_sm = 2;
+    int32 port_sm = 3;
+    string name = 4;
+    ServiceManagerType type_sm = 5;
+    string ip_broker = 6;          // адрес брокера
+    int32 port_broker = 7;         // порт брокера
+    string topic_broker = 8;       // топик брокера
+    bool active = 9;
+    string status = 10;
+    string description = 11;        // какое-либо описание
+    LogLevel log_level = 12;
+}
+
 // Уровни логирования
 enum LogLevel {
   DEBUG = 0;
@@ -34,14 +61,12 @@ enum LogLevel {
   FATAL = 4;
   PANIC = 5;
 }
-// Общий сервис для управления логированием на любом из сервисов
-service LoggingControl {
-  // Получить текущий уровень логирования
-  rpc GetLogLevel(google.protobuf.Empty) returns (LogLevelResponse);
-  // Установить уровень логирования
-    rpc SetLogLevel(SetLogLevelRequest) returns (SetLogLevelResponse);
-    // ReadLogs читает логи с применением фильтров
-    rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
+
+// Типы сервисов
+enum ServiceManagerType {
+  RECEIVER =0;
+  WRITER = 1;
+  RETRANSLATOR =2;
 }
 // Ответ с текущим уровнем логирования
 message LogLevelResponse {
