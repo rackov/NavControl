@@ -1,1 +1,4 @@
 services/receiver/cmd/logs/
+services/rest-api/cmd/logs/
+services/retranslator/cmd/logs/
+services/writer/cmd/logs/

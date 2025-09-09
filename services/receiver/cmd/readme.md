@@ -7,8 +7,11 @@ reflection.Register(s.grpcServer)
 
 # Установите grpcurl, если еще не установлен: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
-# 0 Сведения о сервисе
+# 0.1 Сведения о сервисе
 grpcurl -plaintext localhost:50051 proto.ServiceInfo/GetInfo
+
+# 0.2  Сведения о сервис-менеджере
+grpcurl -plaintext localhost:50051 proto.ServiceInfo/GetServiceManager
 
 # 1. Добавляем порт
 grpcurl -plaintext -d '{

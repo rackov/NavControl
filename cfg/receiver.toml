@@ -1,6 +1,6 @@
-grpc_port = 50051
-metric_port = 9092
-nats_address = "nats://localhost:4222"
+grpc_port = 50000
+metric_port = 9997
+nats_address = "nats://192.168.194.242:4222"
 nats_topic = "nav.data"
 nats_timeout = 5
 

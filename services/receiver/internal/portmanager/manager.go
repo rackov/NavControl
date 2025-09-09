@@ -3,6 +3,9 @@ package portmanager
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"sync"
@@ -10,6 +13,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
+	"github.com/rackov/NavControl/pkg/manager"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
@@ -140,6 +144,31 @@ func (pm *PortManager) reconect() {
 	}
 	pm.muCfg.Unlock()
 
+}
+func (pm *PortManager) GetServiceManager() (*proto.ServiceManager, error) {
+	pm.muCfg.RLock()
+	defer pm.muCfg.RUnlock()
+
+	u, err := url.Parse(pm.cfg.NatsAddress)
+	if err != nil {
+		return nil, err
+	}
+	host := u.Host
+	parts := strings.Split(host, ":")
+	port, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.ServiceManager{
+		PortSm:      int32(pm.cfg.GrpcPort),
+		TypeSm:      manager.StrToServiceManagerType("receiver"),
+		IpBroker:    string(parts[0]),
+		PortBroker:  int32(port),
+		TopicBroker: pm.cfg.NatsTopic,
+		Active:      true,
+		LogLevel:    logger.StrToLoglevel(pm.cfg.LogConfig.LogLevel),
+	}, nil
 }
 func portInfoToProto(portInfo *PortInfo) *proto.PortDefinition {
 	return &proto.PortDefinition{

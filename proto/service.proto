@@ -8,14 +8,14 @@ import "google/protobuf/empty.proto";
 // Общий сервис для получения информации о сервисе
 service ServiceInfo{
   rpc GetInfo(google.protobuf.Empty) returns (ServiceInfoResponse);
-
+  rpc GetServiceManager(google.protobuf.Empty) returns (ServiceManager);
 // ----  сервис для управления логированием на любом из сервисов
   // Получить текущий уровень логирования
   rpc GetLogLevel(google.protobuf.Empty) returns (LogLevelResponse);
   // Установить уровень логирования
-    rpc SetLogLevel(SetLogLevelRequest) returns (SetLogLevelResponse);
+  rpc SetLogLevel(SetLogLevelRequest) returns (SetLogLevelResponse);
     // ReadLogs читает логи с применением фильтров
-    rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
+  rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
 
 }
 

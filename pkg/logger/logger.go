@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/rackov/NavControl/pkg/config"
+	"github.com/rackov/NavControl/proto"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -354,4 +355,20 @@ func (l *Logger) ReadLogEnds(level string, startDate, endDate int64, limit int32
 	}
 
 	return result, nil
+}
+
+func StrToLoglevel(s string) (logLevel proto.LogLevel) {
+	switch s {
+	case "debug":
+		logLevel = proto.LogLevel_DEBUG
+	case "info":
+		logLevel = proto.LogLevel_INFO
+	case "warn":
+		logLevel = proto.LogLevel_WARN
+	case "error":
+		logLevel = proto.LogLevel_ERROR
+	default:
+		logLevel = proto.LogLevel_INFO // значение по умолчанию
+	}
+	return
 }

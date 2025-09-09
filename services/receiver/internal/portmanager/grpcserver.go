@@ -17,11 +17,17 @@ import (
 type GRPCServer struct {
 	pm     *PortManager
 	logger *logger.Logger
-	proto.UnimplementedLoggingControlServer
 	proto.UnimplementedReceiverControlServer
 	proto.UnimplementedServiceInfoServer
 }
 
+func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.ServiceManager, error) {
+	s.pm.mu.Lock()
+	defer s.pm.mu.Unlock()
+
+	return s.pm.GetServiceManager()
+
+}
 func (s *GRPCServer) GetInfo(ctx context.Context, req *emptypb.Empty) (*proto.ServiceInfoResponse, error) {
 	return &proto.ServiceInfoResponse{
 		Name:           "RECEIVER",
@@ -208,7 +214,6 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 
 	// Регистрируем сервисы
 	proto.RegisterReceiverControlServer(grpcServer, s)
-	proto.RegisterLoggingControlServer(grpcServer, s)
 	proto.RegisterServiceInfoServer(grpcServer, s)
 
 	// Включаем reflection API для отладки
