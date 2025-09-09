@@ -13,7 +13,6 @@ import (
 // Receiver представляет отдельный сервис приемника данных
 type Receiver struct {
 	IdReceiver       int    `tmol:"id_receiver" json:"id_receiver"`
-	IdSm             int    `tmol:"id_sm" json:"id_sm"`
 	Active           bool   `tmol:"active" json:"active"`
 	Name             string `tmol:"name" json:"name"`
 	PortReceiver     int    `tmol:"port_receiver" json:"port_receiver"`
@@ -25,6 +24,10 @@ type Receiver struct {
 
 // Services представляет всю конфигурацию приемника данных
 type ControlResiver struct {
+	Description string     `toml:"description"`
+	Name        string     `toml:"name"`
+	IdSm        int        `toml:"id_sm"`
+	IpSm        string     `toml:"ip_sm"`
 	GrpcPort    int        `toml:"grpc_port"`
 	MetricPort  int        `toml:"metric_port"`
 	NatsAddress string     `toml:"nats_address"`
@@ -55,7 +58,6 @@ func NewServices() *ControlResiver {
 			{
 				PortReceiver: 8080, // Инициализация поля PortReceiver значением 8080
 				IdReceiver:   1,
-				IdSm:         1,
 				Active:       false,
 				Name:         "",
 				Protocol:     "EGTS",

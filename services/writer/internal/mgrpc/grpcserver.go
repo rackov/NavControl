@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/rackov/NavControl/pkg/logger"
-	"github.com/rackov/NavControl/pkg/manager"
 	"github.com/rackov/NavControl/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -30,12 +29,12 @@ func NewGRPCServer(l *logger.Logger) *GRPCServer {
 func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.ServiceManager, error) {
 	return &proto.ServiceManager{
 		PortSm:      int32(50001),
-		TypeSm:      manager.StrToServiceManagerType("writer"),
+		TypeSm:      "WRITER",
 		IpBroker:    "192.168.194.242",
 		PortBroker:  4222,
 		TopicBroker: "nav.*",
 		Active:      true,
-		LogLevel:    logger.StrToLoglevel("info"),
+		LogLevel:    "info",
 	}, nil
 }
 

@@ -278,14 +278,14 @@ type ServiceManager struct {
 	IpSm          string                 `protobuf:"bytes,2,opt,name=ip_sm,json=ipSm,proto3" json:"ip_sm,omitempty"`
 	PortSm        int32                  `protobuf:"varint,3,opt,name=port_sm,json=portSm,proto3" json:"port_sm,omitempty"`
 	Name          string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	TypeSm        ServiceManagerType     `protobuf:"varint,5,opt,name=type_sm,json=typeSm,proto3,enum=proto.ServiceManagerType" json:"type_sm,omitempty"`
+	TypeSm        string                 `protobuf:"bytes,5,opt,name=type_sm,json=typeSm,proto3" json:"type_sm,omitempty"`
 	IpBroker      string                 `protobuf:"bytes,6,opt,name=ip_broker,json=ipBroker,proto3" json:"ip_broker,omitempty"`          // адрес брокера
 	PortBroker    int32                  `protobuf:"varint,7,opt,name=port_broker,json=portBroker,proto3" json:"port_broker,omitempty"`   // порт брокера
 	TopicBroker   string                 `protobuf:"bytes,8,opt,name=topic_broker,json=topicBroker,proto3" json:"topic_broker,omitempty"` // топик брокера
 	Active        bool                   `protobuf:"varint,9,opt,name=active,proto3" json:"active,omitempty"`
 	Status        string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
 	Description   string                 `protobuf:"bytes,11,opt,name=description,proto3" json:"description,omitempty"` // какое-либо описание
-	LogLevel      LogLevel               `protobuf:"varint,12,opt,name=log_level,json=logLevel,proto3,enum=proto.LogLevel" json:"log_level,omitempty"`
+	LogLevel      string                 `protobuf:"bytes,12,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -348,11 +348,11 @@ func (x *ServiceManager) GetName() string {
 	return ""
 }
 
-func (x *ServiceManager) GetTypeSm() ServiceManagerType {
+func (x *ServiceManager) GetTypeSm() string {
 	if x != nil {
 		return x.TypeSm
 	}
-	return ServiceManagerType_RECEIVER
+	return ""
 }
 
 func (x *ServiceManager) GetIpBroker() string {
@@ -397,11 +397,11 @@ func (x *ServiceManager) GetDescription() string {
 	return ""
 }
 
-func (x *ServiceManager) GetLogLevel() LogLevel {
+func (x *ServiceManager) GetLogLevel() string {
 	if x != nil {
 		return x.LogLevel
 	}
-	return LogLevel_DEBUG
+	return ""
 }
 
 // Ответ с текущим уровнем логирования
@@ -716,13 +716,13 @@ const file_service_proto_rawDesc = "" +
 	"\bgit_user\x18\v \x01(\tR\agitUser\x12\x1b\n" +
 	"\tgit_email\x18\f \x01(\tR\bgitEmail\x12\x1d\n" +
 	"\n" +
-	"git_remote\x18\r \x01(\tR\tgitRemote\"\xfc\x02\n" +
+	"git_remote\x18\r \x01(\tR\tgitRemote\"\xd0\x02\n" +
 	"\x0eServiceManager\x12\x13\n" +
 	"\x05id_sm\x18\x01 \x01(\x05R\x04idSm\x12\x13\n" +
 	"\x05ip_sm\x18\x02 \x01(\tR\x04ipSm\x12\x17\n" +
 	"\aport_sm\x18\x03 \x01(\x05R\x06portSm\x12\x12\n" +
-	"\x04name\x18\x04 \x01(\tR\x04name\x122\n" +
-	"\atype_sm\x18\x05 \x01(\x0e2\x19.proto.ServiceManagerTypeR\x06typeSm\x12\x1b\n" +
+	"\x04name\x18\x04 \x01(\tR\x04name\x12\x17\n" +
+	"\atype_sm\x18\x05 \x01(\tR\x06typeSm\x12\x1b\n" +
 	"\tip_broker\x18\x06 \x01(\tR\bipBroker\x12\x1f\n" +
 	"\vport_broker\x18\a \x01(\x05R\n" +
 	"portBroker\x12!\n" +
@@ -730,8 +730,8 @@ const file_service_proto_rawDesc = "" +
 	"\x06active\x18\t \x01(\bR\x06active\x12\x16\n" +
 	"\x06status\x18\n" +
 	" \x01(\tR\x06status\x12 \n" +
-	"\vdescription\x18\v \x01(\tR\vdescription\x12,\n" +
-	"\tlog_level\x18\f \x01(\x0e2\x0f.proto.LogLevelR\blogLevel\"\\\n" +
+	"\vdescription\x18\v \x01(\tR\vdescription\x12\x1b\n" +
+	"\tlog_level\x18\f \x01(\tR\blogLevel\"\\\n" +
 	"\x10LogLevelResponse\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
@@ -796,23 +796,21 @@ var file_service_proto_goTypes = []any{
 	(*emptypb.Empty)(nil),       // 9: google.protobuf.Empty
 }
 var file_service_proto_depIdxs = []int32{
-	1, // 0: proto.ServiceManager.type_sm:type_name -> proto.ServiceManagerType
-	0, // 1: proto.ServiceManager.log_level:type_name -> proto.LogLevel
-	9, // 2: proto.ServiceInfo.GetInfo:input_type -> google.protobuf.Empty
-	9, // 3: proto.ServiceInfo.GetServiceManager:input_type -> google.protobuf.Empty
-	9, // 4: proto.ServiceInfo.GetLogLevel:input_type -> google.protobuf.Empty
-	5, // 5: proto.ServiceInfo.SetLogLevel:input_type -> proto.SetLogLevelRequest
-	7, // 6: proto.ServiceInfo.ReadLogs:input_type -> proto.ReadLogsRequest
-	2, // 7: proto.ServiceInfo.GetInfo:output_type -> proto.ServiceInfoResponse
-	3, // 8: proto.ServiceInfo.GetServiceManager:output_type -> proto.ServiceManager
-	4, // 9: proto.ServiceInfo.GetLogLevel:output_type -> proto.LogLevelResponse
-	6, // 10: proto.ServiceInfo.SetLogLevel:output_type -> proto.SetLogLevelResponse
-	8, // 11: proto.ServiceInfo.ReadLogs:output_type -> proto.ReadLogsResponse
-	7, // [7:12] is the sub-list for method output_type
-	2, // [2:7] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	9, // 0: proto.ServiceInfo.GetInfo:input_type -> google.protobuf.Empty
+	9, // 1: proto.ServiceInfo.GetServiceManager:input_type -> google.protobuf.Empty
+	9, // 2: proto.ServiceInfo.GetLogLevel:input_type -> google.protobuf.Empty
+	5, // 3: proto.ServiceInfo.SetLogLevel:input_type -> proto.SetLogLevelRequest
+	7, // 4: proto.ServiceInfo.ReadLogs:input_type -> proto.ReadLogsRequest
+	2, // 5: proto.ServiceInfo.GetInfo:output_type -> proto.ServiceInfoResponse
+	3, // 6: proto.ServiceInfo.GetServiceManager:output_type -> proto.ServiceManager
+	4, // 7: proto.ServiceInfo.GetLogLevel:output_type -> proto.LogLevelResponse
+	6, // 8: proto.ServiceInfo.SetLogLevel:output_type -> proto.SetLogLevelResponse
+	8, // 9: proto.ServiceInfo.ReadLogs:output_type -> proto.ReadLogsResponse
+	5, // [5:10] is the sub-list for method output_type
+	0, // [0:5] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }

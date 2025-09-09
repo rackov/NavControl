@@ -13,7 +13,6 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
-	"github.com/rackov/NavControl/pkg/manager"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
@@ -112,7 +111,6 @@ func cfgToProto(cfg config.Receiver) *proto.PortDefinition {
 	req.Active = cfg.Active
 	req.Name = cfg.Name
 	req.IdReceiver = int32(cfg.IdReceiver)
-	req.IdSm = int32(cfg.IdSm)
 	req.PortReceiver = int32(cfg.PortReceiver)
 	req.Description = cfg.Description
 	req.Status = cfg.Status
@@ -161,13 +159,15 @@ func (pm *PortManager) GetServiceManager() (*proto.ServiceManager, error) {
 	}
 
 	return &proto.ServiceManager{
+		Description: pm.cfg.Description,
+		Name:        pm.cfg.Name,
 		PortSm:      int32(pm.cfg.GrpcPort),
-		TypeSm:      manager.StrToServiceManagerType("receiver"),
+		TypeSm:      "receiver",
 		IpBroker:    string(parts[0]),
 		PortBroker:  int32(port),
 		TopicBroker: pm.cfg.NatsTopic,
 		Active:      true,
-		LogLevel:    logger.StrToLoglevel(pm.cfg.LogConfig.LogLevel),
+		LogLevel:    pm.cfg.LogConfig.LogLevel,
 	}, nil
 }
 func portInfoToProto(portInfo *PortInfo) *proto.PortDefinition {

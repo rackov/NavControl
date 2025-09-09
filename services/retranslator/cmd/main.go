@@ -14,7 +14,7 @@ func main() {
 
 	cfg := config.ConfigLog{
 		LogLevel:    "info",
-		LogFilePath: "logs/writer.log",
+		LogFilePath: "logs/restapi.log",
 		MaxSize:     100,
 		MaxBackups:  3,
 		MaxAge:      28,

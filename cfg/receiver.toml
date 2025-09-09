@@ -1,3 +1,5 @@
+name="test receiver"
+description="description receivers"
 grpc_port = 50000
 metric_port = 9997
 nats_address = "nats://192.168.194.242:4222"
@@ -14,7 +16,6 @@ compress = true
 
 [[receivers]]
 id_receiver = 1
-id_sm = 1
 active = false
 name = "Main Receiver"
 port_receiver = 8980
@@ -25,7 +26,6 @@ connections_count = 0
 
 [[receivers]]
 id_receiver = 2
-id_sm = 1
 active = true
 name = "Backup Receiver"
 port_receiver = 8981
@@ -36,23 +36,12 @@ connections_count = 5
 
 [[receivers]]
 id_receiver = 3
-id_sm = 1
 active = true
 name = "Test Scenario Port"
-port_receiver = 8082
+port_receiver = 8982
 protocol = "Arnavi"
 status = "ok"
 description = ""
 connections_count = 0
 
-[[receivers]]
-id_receiver = 4
-id_sm = 1
-active = true
-name = "Test Scenario Port"
-port_receiver = 8081
-protocol = "Arnavi"
-status = "ok"
-description = "This is a test scenario port"
-connections_count = 0
 
