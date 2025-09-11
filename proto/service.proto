@@ -4,7 +4,7 @@ package proto;
 
 option go_package = "NavControl/proto";
 import "google/protobuf/empty.proto";
-import "gogoproto/gogo.proto";
+// import "gogoproto/gogo.proto";
 
 // Общий сервис для получения информации о сервисе
 service ServiceInfo{
@@ -39,19 +39,18 @@ message ServiceInfoResponse{
 
 
 message ServiceManager {
-    int32 id_sm = 1 [(gogoproto.jsontag) = "id_sm"];
-    string ip_sm = 2 [(gogoproto.jsontag) = "ip_sm"];
-    int32 port_sm = 3 [(gogoproto.jsontag) = "port_sm"];
-    string name = 4 [(gogoproto.jsontag) = "name"];
-    string type_sm = 5 [(gogoproto.jsontag) = "type_sm"];
-    string ip_broker = 6 [(gogoproto.jsontag) = "ip_broker"];
-    int32 port_broker = 7 [(gogoproto.jsontag) = "port_broker"];
-    string topic_broker = 8 [(gogoproto.jsontag) = "topic_broker"];
-    bool active = 9 [(gogoproto.jsontag) = "active"];
-    string status = 10 [(gogoproto.jsontag) = "status"];
-    string description = 11 [(gogoproto.jsontag) = "description"];
-    string log_level = 12 [(gogoproto.jsontag) = "log_level"];
-    string error_msg =13 [(gogoproto.jsontag) = "error_msg"];
+    string ip_sm = 2;
+    int32 port_sm = 3;
+    string name = 4;
+    string type_sm = 5;
+    string ip_broker = 6;
+    int32 port_broker = 7;
+    string topic_broker = 8;
+    bool active = 9;
+    string status = 10;
+    string description = 11;
+    string log_level = 12;
+    string error_msg = 13;
 }
 
 // Уровни логирования
