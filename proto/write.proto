@@ -1,0 +1,22 @@
+// Синтаксис Protocol Buffers v3
+syntax = "proto3";
+
+// Пакет для Go
+package proto;
+
+option go_package = "NavControl/proto";
+
+// import "service.proto";
+import "google/protobuf/empty.proto";
+
+service WriteControl {
+  rpc ListWrite(google.protobuf.Empty) returns (RetWrite);
+}    
+
+message RetWrite {
+  repeated WriteService list_write = 1;
+}
+
+message WriteService {
+    int32 id_writer=1; 
+}

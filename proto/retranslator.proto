@@ -1,0 +1,57 @@
+// Синтаксис Protocol Buffers v3
+syntax = "proto3";
+
+// Пакет для Go
+package proto;
+
+option go_package = "NavControl/proto";
+
+// import "service.proto";
+import "google/protobuf/empty.proto";
+
+service RetranslatorControl {
+    rpc AddClient(Client) returns(Client);
+    rpc UpdateClient(Client) returns(Client);
+    rpc ListClient(google.protobuf.Empty) returns(Clients);
+    rpc UpClient(SetClient) returns(Client);
+    rpc DownClient(SetClient) returns(Client);
+    rpc DeleteClient(SetClient) returns(Client);
+    rpc ListDevices(SetClient) returns(Devices);
+}
+
+message NumDevice{
+    int32 tid=1;
+    string imei=2;
+}
+
+message Device{
+    int32 id_device=1;
+    NumDevice number_device=2;
+}
+message Devices{
+   repeated Device list_device=1; 
+}
+
+message SetClient{
+   int32 id_retranslator=1;
+   int32 id_sm=2;
+}
+
+message Client{
+   int32 id_retranslator=1;
+   int32 id_sm=2;
+   string ip_client=3;
+   int32 port_client=4;
+   string protocol=5;
+   int32 time_start=6;
+   repeated string sensors=7;
+   repeated int32 device_list=8;
+   string name=9;
+   string status=10;
+   bool is_active=11;
+   string description=12;
+}
+
+message Clients{
+    repeated Client clients=1;
+}

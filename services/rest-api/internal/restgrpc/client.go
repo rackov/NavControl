@@ -16,12 +16,19 @@ import (
 type Client struct {
 	info   config.ServiceManager
 	conn   *grpc.ClientConn
-	client proto.ServiceInfoClient
 	logger *logger.Logger // Добавляем поле для логгера
+
+	// Общий клиент для всех сервисов
+	infoClient proto.ServiceInfoClient
+
+	// Специфичные клиенты (инициализируются в зависимости от типа сервиса)
+	receiverClient proto.ReceiverControlClient // только для RECEIVER
+	// writerClient       proto.WriteControlClient        // только для WRITER
+	// retranslatorClient proto.RetranslatorControlClient // только для RETRANSLATOR
 }
 
-func NewClient(server config.ServiceManager, logger *logger.Logger) (*Client, error) {
-	addr := fmt.Sprintf("%s:%d", server.IpSm, server.PortSm)
+func NewClient(service config.ServiceManager, logger *logger.Logger) (*Client, error) {
+	addr := fmt.Sprintf("%s:%d", service.IpSm, service.PortSm)
 
 	logger.Infof("Connecting to gRPC server at %s", addr)
 
@@ -33,12 +40,26 @@ func NewClient(server config.ServiceManager, logger *logger.Logger) (*Client, er
 
 	logger.Infof("Successfully connected to gRPC server at %s", addr)
 
-	return &Client{
-		info:   server,
-		conn:   conn,
-		client: proto.NewServiceInfoClient(conn),
-		logger: logger, // Сохраняем логгер в структуре
-	}, nil
+	client := &Client{
+		info:       service,
+		conn:       conn,
+		infoClient: proto.NewServiceInfoClient(conn),
+		logger:     logger, // Сохраняем логгер в структуре
+	}
+	// Инициализируем специфические клиенты в зависимости от типа сервиса
+	switch service.TypeSm {
+	case "RECEIVER":
+		client.receiverClient = proto.NewReceiverControlClient(conn)
+		// case "WRITER":
+		//     client.writerClient = proto.NewWriteControlClient(conn)
+		// case "RETRANSLATOR":
+		//     client.retranslatorClient = proto.NewRetranslatorControlClient(conn)
+	}
+
+	logger.Infof("Successfully created gRPC client for %s", service.Name)
+
+	return client, nil
+
 }
 
 func (c *Client) GetServiceManager(ctx context.Context) (*proto.ServiceManager, error) {
@@ -47,14 +68,13 @@ func (c *Client) GetServiceManager(ctx context.Context) (*proto.ServiceManager, 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
 
-	manager, err := c.client.GetServiceManager(ctx, &emptypb.Empty{})
+	manager, err := c.infoClient.GetServiceManager(ctx, &emptypb.Empty{})
 	if err != nil {
 		c.logger.Errorf("Failed to call GetServiceManager: %v", err)
 		return &proto.ServiceManager{
 			Name:        c.info.Name,
 			IpSm:        c.info.IpSm,
 			PortSm:      int32(c.info.PortSm),
-			IdSm:        int32(c.info.IdSm),
 			TypeSm:      c.info.TypeSm,
 			IpBroker:    c.info.IpBroker,
 			PortBroker:  int32(c.info.PortBroker),

@@ -15,8 +15,8 @@ import (
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
-	"github.com/rackov/NavControl/services/receiver/internal/handler/arnavi"
-	"github.com/rackov/NavControl/services/receiver/internal/handler/egts"
+	"github.com/rackov/NavControl/services/receiver/handler/arnavi"
+	"github.com/rackov/NavControl/services/receiver/handler/egts"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 )
 

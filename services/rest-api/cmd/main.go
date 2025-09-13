@@ -70,8 +70,6 @@ func main() {
 	}
 	defer h.Close()
 
-	// api := router.Group("/api/v1")
-
 	restMan(router, h)
 
 	addr := fmt.Sprintf(":%d", crest.RestPort)
