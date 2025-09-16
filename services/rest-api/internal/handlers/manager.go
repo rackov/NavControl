@@ -45,7 +45,7 @@ func (h *Handler) GetServiceModules(c *gin.Context) {
 		if err != nil {
 			// c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to get %d manager: %v", manager.IdSm, err)})
 
-			//			manager. = err.Error()
+			manager.Status = err.Error()
 		}
 		h.logger.Infof("Received service manager: %v", manager)
 		// manager.IdSm = int32(id)
