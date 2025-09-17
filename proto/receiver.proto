@@ -6,15 +6,12 @@ package proto;
 
 option go_package = "NavControl/proto";
 
-import "service.proto";
+
 import "google/protobuf/empty.proto";
 
 // Сервис управления RECEIVER'ом
 service ReceiverControl {
 
-   // Устанавливаем уровень логирования, используя общий запрос/ответ
-  rpc SetLogLevel(proto.SetLogLevelRequest) returns (proto.SetLogLevelResponse);
- 
    // Получить количество активных подключений
   rpc GetActiveConnectionsCount(GetClientsRequest) returns (GetActiveCount);
 

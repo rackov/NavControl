@@ -692,7 +692,7 @@ var File_receiver_proto protoreflect.FileDescriptor
 
 const file_receiver_proto_rawDesc = "" +
 	"\n" +
-	"\x0ereceiver.proto\x12\x05proto\x1a\rservice.proto\x1a\x1bgoogle/protobuf/empty.proto\"&\n" +
+	"\x0ereceiver.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"&\n" +
 	"\x0eGetActiveCount\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\"\x9a\x02\n" +
 	"\x0ePortDefinition\x12\x1f\n" +
@@ -738,9 +738,8 @@ const file_receiver_proto_rawDesc = "" +
 	"\x15PortOperationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
-	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\xcd\x05\n" +
-	"\x0fReceiverControl\x12D\n" +
-	"\vSetLogLevel\x12\x19.proto.SetLogLevelRequest\x1a\x1a.proto.SetLogLevelResponse\x12L\n" +
+	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\x87\x05\n" +
+	"\x0fReceiverControl\x12L\n" +
 	"\x19GetActiveConnectionsCount\x12\x18.proto.GetClientsRequest\x1a\x15.proto.GetActiveCount\x12=\n" +
 	"\tListPorts\x12\x16.google.protobuf.Empty\x1a\x18.proto.ListPortsResponse\x12@\n" +
 	"\rGetPortStatus\x12\x18.proto.GetClientsRequest\x1a\x15.proto.PortDefinition\x12J\n" +
@@ -777,37 +776,33 @@ var file_receiver_proto_goTypes = []any{
 	(*DisconnectClientRequest)(nil),  // 8: proto.DisconnectClientRequest
 	(*DisconnectClientResponse)(nil), // 9: proto.DisconnectClientResponse
 	(*PortOperationResponse)(nil),    // 10: proto.PortOperationResponse
-	(*SetLogLevelRequest)(nil),       // 11: proto.SetLogLevelRequest
-	(*empty.Empty)(nil),              // 12: google.protobuf.Empty
-	(*SetLogLevelResponse)(nil),      // 13: proto.SetLogLevelResponse
+	(*empty.Empty)(nil),              // 11: google.protobuf.Empty
 }
 var file_receiver_proto_depIdxs = []int32{
 	1,  // 0: proto.ListPortsResponse.ports:type_name -> proto.PortDefinition
 	1,  // 1: proto.PortStatusList.ports:type_name -> proto.PortDefinition
 	6,  // 2: proto.GetClientsResponse.clients:type_name -> proto.ClientInfo
 	1,  // 3: proto.PortOperationResponse.port_details:type_name -> proto.PortDefinition
-	11, // 4: proto.ReceiverControl.SetLogLevel:input_type -> proto.SetLogLevelRequest
-	5,  // 5: proto.ReceiverControl.GetActiveConnectionsCount:input_type -> proto.GetClientsRequest
-	12, // 6: proto.ReceiverControl.ListPorts:input_type -> google.protobuf.Empty
-	5,  // 7: proto.ReceiverControl.GetPortStatus:input_type -> proto.GetClientsRequest
-	5,  // 8: proto.ReceiverControl.GetConnectedClients:input_type -> proto.GetClientsRequest
-	8,  // 9: proto.ReceiverControl.DisconnectClient:input_type -> proto.DisconnectClientRequest
-	1,  // 10: proto.ReceiverControl.OpenPort:input_type -> proto.PortDefinition
-	1,  // 11: proto.ReceiverControl.ClosePort:input_type -> proto.PortDefinition
-	1,  // 12: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
-	1,  // 13: proto.ReceiverControl.DeletePort:input_type -> proto.PortDefinition
-	13, // 14: proto.ReceiverControl.SetLogLevel:output_type -> proto.SetLogLevelResponse
-	0,  // 15: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
-	2,  // 16: proto.ReceiverControl.ListPorts:output_type -> proto.ListPortsResponse
-	1,  // 17: proto.ReceiverControl.GetPortStatus:output_type -> proto.PortDefinition
-	7,  // 18: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
-	9,  // 19: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
-	10, // 20: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
-	10, // 21: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
-	10, // 22: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
-	10, // 23: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
-	14, // [14:24] is the sub-list for method output_type
-	4,  // [4:14] is the sub-list for method input_type
+	5,  // 4: proto.ReceiverControl.GetActiveConnectionsCount:input_type -> proto.GetClientsRequest
+	11, // 5: proto.ReceiverControl.ListPorts:input_type -> google.protobuf.Empty
+	5,  // 6: proto.ReceiverControl.GetPortStatus:input_type -> proto.GetClientsRequest
+	5,  // 7: proto.ReceiverControl.GetConnectedClients:input_type -> proto.GetClientsRequest
+	8,  // 8: proto.ReceiverControl.DisconnectClient:input_type -> proto.DisconnectClientRequest
+	1,  // 9: proto.ReceiverControl.OpenPort:input_type -> proto.PortDefinition
+	1,  // 10: proto.ReceiverControl.ClosePort:input_type -> proto.PortDefinition
+	1,  // 11: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
+	1,  // 12: proto.ReceiverControl.DeletePort:input_type -> proto.PortDefinition
+	0,  // 13: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
+	2,  // 14: proto.ReceiverControl.ListPorts:output_type -> proto.ListPortsResponse
+	1,  // 15: proto.ReceiverControl.GetPortStatus:output_type -> proto.PortDefinition
+	7,  // 16: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
+	9,  // 17: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
+	10, // 18: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
+	10, // 19: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
+	10, // 20: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
+	10, // 21: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
+	13, // [13:22] is the sub-list for method output_type
+	4,  // [4:13] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -818,7 +813,6 @@ func file_receiver_proto_init() {
 	if File_receiver_proto != nil {
 		return
 	}
-	file_service_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
