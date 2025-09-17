@@ -28,6 +28,10 @@ type Client struct {
 	// retranslatorClient proto.RetranslatorControlClient // только для RETRANSLATOR
 }
 
+func (c *Client) GetInfo() (config.ServiceManager, error) {
+	return c.info, nil
+}
+
 func (c *Client) connect() error {
 	// Проверяем текущее состояние подключения
 	if c.conn != nil {
@@ -92,25 +96,17 @@ func NewClient(service config.ServiceManager, logger *logger.Logger) (*Client, e
 	return client, nil
 }
 
-func (c *Client) GetServiceManager(ctx context.Context) (*proto.ServiceManager, error) {
+func (c *Client) GetServiceManager(ctx context.Context) (*config.ServiceManager, error) {
 	c.logger.Info("Calling GetServiceManager gRPC method")
 
 	// Используем общий метод connect для проверки и восстановления соединения при необходимости
 	if err := c.connect(); err != nil {
 		c.logger.Errorf("Failed to ensure connection: %v", err)
-		return &proto.ServiceManager{
-			Name:        c.info.Name,
-			IpSm:        c.info.IpSm,
-			PortSm:      int32(c.info.PortSm),
-			TypeSm:      c.info.TypeSm,
-			IpBroker:    c.info.IpBroker,
-			PortBroker:  int32(c.info.PortBroker),
-			TopicBroker: c.info.TopicBroker,
-			Active:      false,
-			Status:      "offline",
-			Description: c.info.Description,
-			LogLevel:    c.info.LogLevel,
-		}, err
+		c.info.Active = false
+		c.info.Status = "offline"
+		c.info.ErrorMsg = err.Error()
+
+		return &c.info, err
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
@@ -119,23 +115,22 @@ func (c *Client) GetServiceManager(ctx context.Context) (*proto.ServiceManager, 
 	manager, err := c.infoClient.GetServiceManager(ctx, &emptypb.Empty{})
 	if err != nil {
 		c.logger.Errorf("Failed to call GetServiceManager: %v", err)
-		return &proto.ServiceManager{
-			Name:        c.info.Name,
-			IpSm:        c.info.IpSm,
-			PortSm:      int32(c.info.PortSm),
-			TypeSm:      c.info.TypeSm,
-			IpBroker:    c.info.IpBroker,
-			PortBroker:  int32(c.info.PortBroker),
-			TopicBroker: c.info.TopicBroker,
-			Active:      false,
-			Status:      "offline",
-			Description: c.info.Description,
-			LogLevel:    c.info.LogLevel,
-		}, err
+		c.info.Active = false
+		c.info.Status = "offline"
+		c.info.ErrorMsg = err.Error()
+
+		return &c.info, err
 	}
 
 	c.logger.Infof("Successfully received ServiceManager: %+v", manager)
-	return manager, nil
+	c.info.Active = true
+	c.info.Status = "online"
+	c.info.ErrorMsg = ""
+	c.info.TypeSm = manager.TypeSm
+	c.info.IpBroker = manager.IpBroker
+	c.info.PortBroker = int(manager.PortBroker)
+
+	return &c.info, nil
 }
 
 func (c *Client) Close() error {

@@ -10,14 +10,14 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 	{
 		controller.GET("/sm", h.GetServiceModules)
 		controller.POST("/sm", h.CreateServiceModule)
-		// controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
+		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
 		// controller.PUT("/sm", h.UpdateServiceModule)
 	}
 }
 
 /*
 
-// GetServiceModules возвращает список всех сервисов
+
 func (h *Handler) GetServiceModules(c *gin.Context) {
 	serviceModules, err := h.service.GetServiceModules()
 	if err != nil {
@@ -71,28 +71,7 @@ func (h *Handler) CreateServiceModule(c *gin.Context) {
 	c.JSON(201, createdService)
 }
 
-// UpdateServiceModule обновляет информацию о сервис менеджере
-func (h *Handler) UpdateServiceModule(c *gin.Context) {
-	var serviceModule ServiceModuleOld
 
-	if err := c.ShouldBindJSON(&serviceModule); err != nil {
-		c.JSON(400, gin.H{
-			"error": "Invalid request body",
-		})
-		return
-	}
-
-	// Обновление сервиса
-	updatedService, err := h.service.UpdateServiceModule(serviceModule)
-	if err != nil {
-		c.JSON(500, gin.H{
-			"error": "Failed to update service module",
-		})
-		return
-	}
-
-	c.JSON(200, updatedService)
-}
 */
 
 /*

@@ -35,17 +35,20 @@ type ServiceManager struct {
 	Status      string `json:"status"`
 	Description string `json:"description"` // какое-либо описание
 	LogLevel    string `json:"log_level"`
+	ErrorMsg    string `json:"error_msg" toml:"-"`
 }
 
 type CfgRestApi struct {
-	RestPort    int              `toml:"rest_port"`
-	MetricPort  int              `toml:"metric_port"`
-	Cors        *CfgCors         `toml:"cors"`
-	ServiceList []ServiceManager `toml:"service_list"`
+	RestPort       int              `toml:"rest_port"`
+	MetricPort     int              `toml:"metric_port"`
+	Cors           *CfgCors         `toml:"cors"`
+	ServiceList    []ServiceManager `toml:"service_list"`
+	FileConfigPath string           `toml:"-"`
+	FileLogPath    string           `toml:"-"`
 }
 
-func (s *CfgRestApi) LoadConfig(fname string) error {
-	f, err := os.Open(fname)
+func (s *CfgRestApi) LoadConfig() error {
+	f, err := os.Open(s.FileConfigPath)
 
 	if err != nil {
 		return err
@@ -57,8 +60,8 @@ func (s *CfgRestApi) LoadConfig(fname string) error {
 	}
 	return err
 }
-func (s *CfgRestApi) SaveCfg(fname string) error {
-	f, err := os.Create(fname)
+func (s *CfgRestApi) SaveCfg() error {
+	f, err := os.Create(s.FileConfigPath)
 
 	if err != nil {
 		return err

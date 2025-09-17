@@ -162,7 +162,7 @@ func (pm *PortManager) GetServiceManager() (*proto.ServiceManager, error) {
 		Description: pm.cfg.Description,
 		Name:        pm.cfg.Name,
 		PortSm:      int32(pm.cfg.GrpcPort),
-		TypeSm:      "receiver",
+		TypeSm:      "RECEIVER",
 		IpBroker:    string(parts[0]),
 		PortBroker:  int32(port),
 		TopicBroker: pm.cfg.NatsTopic,

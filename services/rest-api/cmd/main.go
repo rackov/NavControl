@@ -19,7 +19,7 @@ func main() {
 
 	cfg := config.ConfigLog{
 		LogLevel:    "info",
-		LogFilePath: "logs/writer.log",
+		LogFilePath: "logs/restapi.log",
 		MaxSize:     100,
 		MaxBackups:  3,
 		MaxAge:      28,
@@ -32,7 +32,8 @@ func main() {
 
 	}
 	crest := config.CfgRestApi{}
-	if err = crest.LoadConfig(*configPath); err != nil {
+	crest.FileConfigPath = *configPath
+	if err = crest.LoadConfig(); err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
