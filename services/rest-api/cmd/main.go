@@ -12,6 +12,26 @@ import (
 	"github.com/rackov/NavControl/services/rest-api/internal/handlers"
 )
 
+func restMan(router *gin.Engine, h *handlers.Handler) {
+	controller := router.Group("/controller")
+	{
+		// ServiceModule
+		controller.GET("/sm/level", h.GetLogLevel)
+		controller.POST("/sm/level", h.SetLogLevel)
+		controller.GET("/sm/log", h.ReadLogs)
+		controller.GET("/sm", h.GetServiceModules)
+		controller.POST("/sm", h.CreateServiceModule)
+		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
+		// Receiver
+		controller.GET("/receiver/:id_sm", h.ListPorts)
+		controller.POST("/receiver", h.AddPort)
+		controller.PATCH("/receiver/:id_sm/:id_rec", h.ChangeActive) // ClosePort, OpenPort
+		controller.DELETE("/receiver/:id_sm/:id_rec", h.DeletePort)
+		controller.GET("/receiver/client/:id_sm", h.GetConnectedClients)
+		controller.POST("/receiver/client/:id_sm", h.DisconnectClient)
+	}
+}
+
 func main() {
 
 	configPath := flag.String("config", "NavControl/cfg/restapi.toml", "путь к файлу конфигурации")

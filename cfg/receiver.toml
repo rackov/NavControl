@@ -1,5 +1,7 @@
-name="test receiver"
-description="description receivers"
+description = "description receivers"
+name = "test receiver"
+id_sm = 0
+ip_sm = ""
 grpc_port = 50000
 metric_port = 9997
 nats_address = "nats://192.168.194.242:4222"
@@ -44,4 +46,12 @@ status = "ok"
 description = ""
 connections_count = 0
 
-
+[[receivers]]
+id_receiver = 3
+active = true
+name = "Test Scenario Port 2"
+port_receiver = 8983
+protocol = "Arnavi"
+status = "ok"
+description = ""
+connections_count = 0

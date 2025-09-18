@@ -31,7 +31,9 @@ type Client struct {
 func (c *Client) GetInfo() (config.ServiceManager, error) {
 	return c.info, nil
 }
-
+func (c *Client) ReceiverClient() proto.ReceiverControlClient {
+	return c.receiverClient
+}
 func (c *Client) connect() error {
 	// Проверяем текущее состояние подключения
 	if c.conn != nil {
