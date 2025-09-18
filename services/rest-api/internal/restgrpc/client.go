@@ -143,3 +143,76 @@ func (c *Client) Close() error {
 	c.logger.Info("gRPC connection closed successfully")
 	return nil
 }
+
+// GetLogLevel возвращает текущий уровень логирования сервиса
+func (c *Client) GetLogLevel(ctx context.Context) (*proto.LogLevelResponse, error) {
+	c.logger.Info("Calling GetLogLevel gRPC method")
+
+	// Используем общий метод connect для проверки и восстановления соединения при необходимости
+	if err := c.connect(); err != nil {
+		c.logger.Errorf("Failed to ensure connection: %v", err)
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	response, err := c.infoClient.GetLogLevel(ctx, &emptypb.Empty{})
+	if err != nil {
+		c.logger.Errorf("Failed to call GetLogLevel: %v", err)
+		return nil, err
+	}
+
+	c.logger.Info("Successfully received LogLevel response")
+	return response, nil
+}
+
+// SetLogLevel устанавливает уровень логирования сервиса
+func (c *Client) SetLogLevel(ctx context.Context, level string) (*proto.SetLogLevelResponse, error) {
+	c.logger.Infof("Calling SetLogLevel gRPC method with level: %s", level)
+
+	// Используем общий метод connect для проверки и восстановления соединения при необходимости
+	if err := c.connect(); err != nil {
+		c.logger.Errorf("Failed to ensure connection: %v", err)
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+	defer cancel()
+
+	request := &proto.SetLogLevelRequest{
+		Level: level,
+	}
+
+	response, err := c.infoClient.SetLogLevel(ctx, request)
+	if err != nil {
+		c.logger.Errorf("Failed to call SetLogLevel: %v", err)
+		return nil, err
+	}
+
+	c.logger.Info("Successfully set log level")
+	return response, nil
+}
+
+// ReadLogs читает логи сервиса с применением фильтров
+func (c *Client) ReadLogs(ctx context.Context, request *proto.ReadLogsRequest) (*proto.ReadLogsResponse, error) {
+	c.logger.Info("Calling ReadLogs gRPC method")
+
+	// Используем общий метод connect для проверки и восстановления соединения при необходимости
+	if err := c.connect(); err != nil {
+		c.logger.Errorf("Failed to ensure connection: %v", err)
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10) // Увеличенный таймаут для чтения логов
+	defer cancel()
+
+	response, err := c.infoClient.ReadLogs(ctx, request)
+	if err != nil {
+		c.logger.Errorf("Failed to call ReadLogs: %v", err)
+		return nil, err
+	}
+
+	c.logger.Info("Successfully received logs")
+	return response, nil
+}

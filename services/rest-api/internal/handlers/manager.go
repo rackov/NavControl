@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/config"
+	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/rest-api/internal/restgrpc"
 )
 
@@ -32,6 +33,150 @@ func (h *Handler) GetServiceManager(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, manager)
+}
+
+// GetLogLevel возвращает текущий уровень логирования сервиса
+func (h *Handler) GetLogLevel(c *gin.Context) {
+	idStr := c.Query("id_sm")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id_sm parameter is required"})
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		return
+	}
+
+	client, exists := h.services[id]
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		return
+	}
+
+	// Проверяем соединение и получаем клиент
+	_, err = client.GetServiceManager(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Вызываем gRPC метод для получения уровня логирования
+	logLevel, err := client.GetLogLevel(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, logLevel)
+}
+
+// SetLogLevel устанавливает уровень логирования сервиса
+func (h *Handler) SetLogLevel(c *gin.Context) {
+	var req struct {
+		IDSm  int    `json:"id_sm"`
+		Level string `json:"level"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	client, exists := h.services[req.IDSm]
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		return
+	}
+
+	// Проверяем соединение и получаем клиент
+	_, err := client.GetServiceManager(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Вызываем gRPC метод для установки уровня логирования
+	response, err := client.SetLogLevel(c.Request.Context(), req.Level)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// ReadLogs читает логи сервиса с применением фильтров
+func (h *Handler) ReadLogs(c *gin.Context) {
+	idStr := c.Query("id_sm")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id_sm parameter is required"})
+		return
+	}
+
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		return
+	}
+
+	client, exists := h.services[id]
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		return
+	}
+
+	// Проверяем соединение и получаем клиент
+	_, err = client.GetServiceManager(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Создаем запрос на чтение логов
+	readLogsReq := &proto.ReadLogsRequest{}
+
+	// Парсим параметры запроса
+	if level := c.Query("level"); level != "" {
+		readLogsReq.Level = level
+	}
+
+	if startDateStr := c.Query("start_date"); startDateStr != "" {
+		startDate, err := strconv.ParseInt(startDateStr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start_date parameter"})
+			return
+		}
+		readLogsReq.StartDate = startDate
+	}
+
+	if endDateStr := c.Query("end_date"); endDateStr != "" {
+		endDate, err := strconv.ParseInt(endDateStr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end_date parameter"})
+			return
+		}
+		readLogsReq.EndDate = endDate
+	}
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		limit, err := strconv.ParseInt(limitStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit parameter"})
+			return
+		}
+		readLogsReq.Limit = int32(limit)
+	}
+
+	// Вызываем gRPC метод для чтения логов
+	response, err := client.ReadLogs(c.Request.Context(), readLogsReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, response)
 }
 
 // GetServiceModules возвращает список всех сервисов
@@ -163,17 +308,3 @@ func (h *Handler) DeleteServiceModule(c *gin.Context) {
 
 	c.JSON(http.StatusOK, conf)
 }
-
-// UpdateServiceModule обновляет информацию о сервис менеджере
-// func (h *Handler) UpdateServiceModule(c *gin.Context) {
-// var serviceModule ServiceModuleOld
-// 	// Обновление сервиса
-// 	updatedService, err := h.service.UpdateServiceModule(serviceModule)
-// 	if err != nil {
-// 		c.JSON(500, gin.H{
-// 			"error": "Failed to update service module",
-// 		})
-// 		return
-// 	}
-// 	c.JSON(200, updatedService)
-// }

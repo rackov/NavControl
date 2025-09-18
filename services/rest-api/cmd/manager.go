@@ -8,10 +8,12 @@ import (
 func restMan(router *gin.Engine, h *handlers.Handler) {
 	controller := router.Group("/controller")
 	{
+		controller.GET("/sm/level", h.GetLogLevel)
+		controller.POST("/sm/level", h.SetLogLevel)
+		controller.GET("/sm/log", h.ReadLogs)
 		controller.GET("/sm", h.GetServiceModules)
 		controller.POST("/sm", h.CreateServiceModule)
 		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
-		// controller.PUT("/sm", h.UpdateServiceModule)
 	}
 }
 
