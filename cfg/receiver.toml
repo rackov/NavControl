@@ -17,12 +17,12 @@ max_age = 28
 compress = true
 
 [[receivers]]
-id_receiver = 1
-active = false
+id_receiver = 6
+active = true
 name = "Main Receiver"
 port_receiver = 8980
 protocol = "EGTS"
-status = "ok"
+status = ""
 description = "Primary data receiver"
 connections_count = 0
 
@@ -47,11 +47,21 @@ description = ""
 connections_count = 0
 
 [[receivers]]
-id_receiver = 3
+id_receiver = 7
 active = true
-name = "Test Scenario Port 2"
-port_receiver = 8983
-protocol = "Arnavi"
-status = "ok"
-description = ""
+name = "Main Receiver"
+port_receiver = 8985
+protocol = "EGTS"
+status = ""
+description = "Primary data receiver"
+connections_count = 0
+
+[[receivers]]
+id_receiver = 8
+active = true
+name = "Main Receiver"
+port_receiver = 8988
+protocol = "EGTS"
+status = ""
+description = "Primary data receiver"
 connections_count = 0

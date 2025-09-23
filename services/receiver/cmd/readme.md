@@ -24,13 +24,13 @@ grpcurl -plaintext -d '{
 
 # 2. Открываем порт
 grpcurl -plaintext -d '{
-  "port_receiver": 8082
-}' localhost:50051 proto.ReceiverControl/OpenPort
+  "port_receiver": 8982
+}' localhost:50000 proto.ReceiverControl/OpenPort
 
 # 3. Проверяем количество подключений (должно быть 0)
 grpcurl -plaintext -d '{
-  "port_receiver": 8080
-}' localhost:50051 proto.ReceiverControl/GetActiveConnectionsCount
+  "port_receiver": 8982
+}' localhost:50000 proto.ReceiverControl/GetActiveConnectionsCount
 
 # 4. Подключаемся к порту 8082 с помощью telnet в другом терминале:
 # telnet localhost 8082
@@ -52,13 +52,13 @@ grpcurl -plaintext -d '{
 
 # 8. Закрываем порт
 grpcurl -plaintext -d '{
-  "port_receiver": 8082
+  "port_receiver": 8982
 }' localhost:50051 proto.ReceiverControl/ClosePort
 
 # 9. Удаляем порт
 grpcurl -plaintext -d '{
-  "port_receiver": 8082
-}' localhost:50051 proto.ReceiverControl/DeletePort
+  "port_receiver": 8983
+}' localhost:50000 proto.ReceiverControl/DeletePort
 
 # 10  Список портов
 grpcurl -plaintext localhost:50051 proto.ReceiverControl/ListPorts

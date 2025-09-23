@@ -51,6 +51,7 @@ type ArnaviProtocol struct {
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
 	logger      *logger.Logger
+	port        int // Добавляем номер порта
 }
 
 // NewArnaviProtocol создает новый экземпляр протокола Arnavi
@@ -78,6 +79,9 @@ func (a *ArnaviProtocol) Start(port int, nc models.NatsConf) error {
 		return fmt.Errorf("failed to listen on port %d: %v", port, err)
 	}
 
+	// Сохраняем номер порта и ссылку на PortManager (будет установлено при добавлении порта)
+	a.port = port
+
 	a.logger.Infof("%s protocol started on port %d", a.GetName(), port)
 
 	// Запускаем обработчик соединений в отдельной горутине
@@ -93,40 +97,57 @@ func (a *ArnaviProtocol) handleConnections(nc models.NatsConf) {
 		case <-a.ctx.Done():
 			return
 		default:
-			conn, err := a.listener.Accept()
-			if err != nil {
-				// Проверяем, не был ли сервер остановлен
-				if a.ctx.Err() != nil {
-					return
-				}
+		}
+
+		conn, err := a.listener.Accept()
+		if err != nil {
+			select {
+			case <-a.ctx.Done():
+				return
+			default:
 				a.logger.Errorf("Error accepting connection: %v", err)
 				continue
 			}
-
-			// Добавляем соединение в список
-			a.connMu.Lock()
-			a.connections[conn] = struct{}{}
-			a.connMu.Unlock()
-
-			// Создаем информацию о клиенте
-			clientID := fmt.Sprintf("%s-%d", conn.RemoteAddr().String(), time.Now().Unix())
-			clientInfo := ClientInfo{
-				ID:          clientID,
-				RemoteAddr:  conn.RemoteAddr().String(),
-				Protocol:    a.GetName(),
-				ConnectTime: time.Now().Format(time.RFC3339),
-			}
-
-			//	"Client %s connected  Protocol: %s", clientID, a.GetName())
-			connectedDevices.Inc()
-			// Добавляем клиента в список
-			a.clientsMu.Lock()
-			a.clients[clientID] = clientInfo
-			a.clientsMu.Unlock()
-
-			// Обрабатываем соединение в отдельной горутине
-			go a.handleConnection(conn, clientID, nc)
 		}
+
+		a.connMu.Lock()
+		a.connections[conn] = struct{}{}
+		a.connMu.Unlock()
+
+		// Генерируем уникальный ID для клиента
+		clientID := fmt.Sprintf("%s-%d", conn.RemoteAddr().String(), time.Now().UnixNano())
+
+		// Добавляем клиента в список
+		a.clientsMu.Lock()
+		a.clients[clientID] = ClientInfo{
+			ID:          clientID,
+			RemoteAddr:  conn.RemoteAddr().String(),
+			ConnectTime: time.Now().Format(time.RFC3339),
+			Protocol:    a.GetName(),
+		}
+		a.clientsMu.Unlock()
+
+		connectedDevices.Inc()
+
+		go func(c net.Conn, id string) {
+			defer func() {
+				c.Close()
+
+				// Удаляем соединение из списка
+				a.connMu.Lock()
+				delete(a.connections, c)
+				a.connMu.Unlock()
+
+				// Удаляем клиента из списка
+				a.clientsMu.Lock()
+				delete(a.clients, id)
+				a.clientsMu.Unlock()
+
+				connectedDevices.Dec()
+			}()
+
+			a.handleConnection(c, id, nc)
+		}(conn, clientID)
 	}
 }
 

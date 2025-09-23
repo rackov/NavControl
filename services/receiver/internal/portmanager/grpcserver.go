@@ -127,6 +127,7 @@ func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortDefinition) (*
 			Message: err.Error(),
 		}, nil
 	}
+	req.Active = true
 	if err = s.pm.SaveConfigPort("edit", req); err != nil {
 		return &proto.PortOperationResponse{
 			Success: false,
@@ -148,6 +149,7 @@ func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortDefinition) (
 			Message: err.Error(),
 		}, nil
 	}
+	req.Active = false
 	if err = s.pm.SaveConfigPort("edit", req); err != nil {
 		return &proto.PortOperationResponse{
 			Success: false,
@@ -169,6 +171,7 @@ func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*p
 			Message: err.Error(),
 		}, nil
 	}
+
 	if err = s.pm.SaveConfigPort("add", req); err != nil {
 		return &proto.PortOperationResponse{
 			Success: false,
