@@ -47,19 +47,3 @@ func main() {
 	}
 
 }
-
-/*
-	// Получаем путь к исполняемому файлу
-	exePath, err := os.Executable()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Получаем директорию исполняемого файла
-	exeDir := filepath.Dir(exePath)
-
-	// Строим путь к файлу конфигурации относительно директории исполняемого файла
-	configPath := filepath.Join(exeDir, "receiver.toml")
-
-
-*/
