@@ -23,9 +23,9 @@ type Client struct {
 	infoClient proto.ServiceInfoClient
 
 	// Специфичные клиенты (инициализируются в зависимости от типа сервиса)
-	receiverClient proto.ReceiverControlClient // только для RECEIVER
-	// writerClient       proto.WriteControlClient        // только для WRITER
-	// retranslatorClient proto.RetranslatorControlClient // только для RETRANSLATOR
+	receiverClient     proto.ReceiverControlClient     // только для RECEIVER
+	writerClient       proto.WriteControlClient        // только для WRITER
+	retranslatorClient proto.RetranslatorControlClient // только для RETRANSLATOR
 }
 
 func (c *Client) GetInfo() (config.ServiceManager, error) {
@@ -34,6 +34,13 @@ func (c *Client) GetInfo() (config.ServiceManager, error) {
 func (c *Client) ReceiverClient() proto.ReceiverControlClient {
 	return c.receiverClient
 }
+func (c *Client) WriterClient() proto.WriteControlClient {
+	return c.writerClient
+}
+func (c *Client) RetranslatorClient() proto.RetranslatorControlClient {
+	return c.retranslatorClient
+}
+
 func (c *Client) connect() error {
 	// Проверяем текущее состояние подключения
 	if c.conn != nil {
@@ -72,10 +79,10 @@ func (c *Client) connect() error {
 	switch c.info.TypeSm {
 	case "RECEIVER":
 		c.receiverClient = proto.NewReceiverControlClient(c.conn)
-		// case "WRITER":
-		//     c.writerClient = proto.NewWriteControlClient(c.conn)
-		// case "RETRANSLATOR":
-		//     c.retranslatorClient = proto.NewRetranslatorControlClient(c.conn)
+	case "WRITER":
+		c.writerClient = proto.NewWriteControlClient(c.conn)
+	case "RETRANSLATOR":
+		c.retranslatorClient = proto.NewRetranslatorControlClient(c.conn)
 	}
 
 	return nil

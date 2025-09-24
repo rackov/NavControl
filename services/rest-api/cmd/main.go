@@ -29,6 +29,14 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.DELETE("/receiver/:id_sm/:id_rec", h.DeletePort)
 		controller.GET("/receiver/client/:id_sm", h.GetConnectedClients)
 		controller.POST("/receiver/client/:id_sm", h.DisconnectClient)
+		// Retranslator
+		// controller.GET("/retranslator", GetRtl)
+		controller.GET("/retranslator/:id_sm", h.ListClient)
+		controller.POST("/retranslator", h.AddClient)
+		controller.PUT("/retranslator", h.UpdateClient)
+		controller.PATCH("/retranslator/:id_sm/:id_ret", h.ChangeActiveClient) //UpClient DownClient
+		controller.DELETE("/retranslator/:id_sm/:id_ret", h.DeleteClient)
+		controller.GET("/retranslator/devices/:id_sm", h.ListDevices)
 	}
 }
 
