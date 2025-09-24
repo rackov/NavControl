@@ -1,3 +1,4 @@
+// go run *.go -config "/home/vladimir/go/project/NavControl/cfg/writer.toml"
 package wrdbnats
 
 import (
@@ -88,7 +89,7 @@ func (s *WrNatsServer) init() (err error) {
 	return s.stcon.Error
 }
 
-func New(wr *config.ControlWriter) (wrN WrNatsServer, err error) {
+func New(wr *config.ControlWriter, log *logger.Logger) (wrN WrNatsServer, err error) {
 
 	tempfile := fmt.Sprintf("temp_data_%d.json", wr.IdWriter)
 	constr := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -104,6 +105,7 @@ func New(wr *config.ControlWriter) (wrN WrNatsServer, err error) {
 		natsKey:      wr.NatsTopic,
 		Active:       true,
 		ttN:          5 * time.Second,
+		log:          log,
 		mutex:        &sync.Mutex{},
 	}
 	wrN.stcon.Error = wrN.init()

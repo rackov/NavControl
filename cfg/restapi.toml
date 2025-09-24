@@ -29,3 +29,17 @@ active = true
 status = "running"
 description = "Primary service manager for sensor data"
 log_level = "info"
+
+[[service_list]]
+id_sm = 2
+ip_sm = "localhost"
+port_sm = 50052
+name = "Отправка  данных"
+type_sm = "RETRANSLATOR"
+ip_broker = ""
+port_broker = 0
+topic_broker = ""
+active = true
+status = "online"
+description = ""
+log_level = ""

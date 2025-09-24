@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
@@ -16,7 +17,10 @@ func main() {
 	flag.Parse()
 
 	config := config.NewWriter()
-	config.LoadConfig(*configPath)
+	if err := config.LoadConfig(*configPath); err != nil {
+		fmt.Printf("Failed to load config: %v\n", err)
+		panic(fmt.Sprintf("Failed to load config: %v", err))
+	}
 
 	log, err := logger.NewLogger(config.LogConfig)
 	if err != nil {

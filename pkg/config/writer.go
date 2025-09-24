@@ -17,7 +17,6 @@ type ControlWriter struct {
 	NatsAddress string    `toml:"nats_address"`
 	NatsTopic   string    `toml:"nats_topic"`
 	NatsTimeOut int       `toml:"nats_timeout"` // в секундах
-	LogConfig   ConfigLog `toml:"log_config"`
 	IdWriter    int32     `toml:"id_writer"`
 	DbIp        string    `toml:"db_ip"`
 	DbPort      int32     `toml:"db_port"`
@@ -25,6 +24,7 @@ type ControlWriter struct {
 	DbUser      string    `toml:"db_user"`
 	DbPass      string    `toml:"db_pass"`
 	DbTable     string    `toml:"db_table"`
+	LogConfig   ConfigLog `toml:"log_config"`
 	Filename    string    `toml:"-"`
 }
 

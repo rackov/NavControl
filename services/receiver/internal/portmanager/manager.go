@@ -208,18 +208,9 @@ func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
 		// Получаем количество подключений для порта
 		var connectionsCount int32 = 0
 		if portInfo.Active {
-			protocol := portInfo.ProtocolInstance.GetName()
-			switch protocol {
-			case "Arnavi":
-				if arnaviProto, ok := portInfo.ProtocolInstance.(*arnavi.ArnaviProtocol); ok {
-					clients := arnaviProto.GetClients()
-					connectionsCount = int32(len(clients))
-				}
-			case "EGTS":
-				if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
-					clients := egtsProto.GetClients()
-					connectionsCount = int32(len(clients))
-				}
+			if arnaviProto, ok := portInfo.ProtocolInstance.(*arnavi.ArnaviProtocol); ok {
+				clients := arnaviProto.GetClients()
+				connectionsCount = int32(len(clients))
 			}
 		}
 		pdef := portInfoToProto(portInfo)
@@ -247,8 +238,7 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 	var protocolInstance protocol.NavigationProtocol
 	switch protocolName {
 	case "Arnavi":
-		arnaviProto := arnavi.NewArnaviProtocol(pm.logger)
-		protocolInstance = arnaviProto
+		protocolInstance = arnavi.NewArnaviProtocol(pm.logger)
 	case "EGTS":
 		protocolInstance = egts.NewEgtsProtocol(pm.logger)
 	default:
@@ -284,9 +274,9 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) error {
 
 	cfgrec := config.Receiver{}
-	newId := pm.newId() + 1
+	newId := pm.newId()
 	index := pm.findPort(int(req.PortReceiver))
-	cfgrec.IdReceiver = int(req.IdReceiver)
+	cfgrec.IdReceiver = int(req.IdReceiver) + 1
 	cfgrec.Active = req.Active
 	cfgrec.Name = req.Name
 	cfgrec.PortReceiver = int(req.PortReceiver)
@@ -298,15 +288,17 @@ func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) 
 	defer pm.muCfg.Unlock()
 	switch change {
 	case "add":
-		cfgrec.IdReceiver = newId
+		if req.IdReceiver != 0 {
+			cfgrec.IdReceiver = int(req.IdReceiver)
+		} else {
+			cfgrec.IdReceiver = newId
+		}
 		pm.cfg.Receivers = append(pm.cfg.Receivers, cfgrec)
 	case "edit":
-		pm.logger.Infof("edit port %d index %d", req.PortReceiver, index)
 		if index != -1 {
 			pm.cfg.Receivers[index] = cfgrec
 		}
 	case "delete":
-		pm.logger.Infof("delete port %d index %d", req.PortReceiver, index)
 		if index != -1 {
 			pm.cfg.Receivers = append(pm.cfg.Receivers[:index], pm.cfg.Receivers[index+1:]...)
 
@@ -319,9 +311,9 @@ func (pm *PortManager) findPort(port int) (index int) {
 	pm.muCfg.RLock()
 	defer pm.muCfg.RUnlock()
 	index = -1
-	for i, r := range pm.cfg.Receivers {
+	for _, r := range pm.cfg.Receivers {
 		if r.PortReceiver == port {
-			return i
+			return index
 		}
 	}
 	return index
@@ -349,39 +341,21 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 		return fmt.Errorf("port %d not found", portNumber)
 	}
 
-	// Проверяем, может быть порт уже активен
 	if portInfo.Active {
 		return fmt.Errorf("port %d is already active", portNumber)
 	}
-
-	// При повторном запуске создаем новый экземпляр протокола
-	// Это гарантирует, что мы получим новый "адрес" (новый слушатель)
-	var protocolInstance protocol.NavigationProtocol
-	switch portInfo.Protocol {
-	case "Arnavi":
-		arnaviProto := arnavi.NewArnaviProtocol(pm.logger)
-		protocolInstance = arnaviProto
-	case "EGTS":
-		protocolInstance = egts.NewEgtsProtocol(pm.logger)
-	default:
-		return fmt.Errorf("unsupported protocol: %s", portInfo.Protocol)
-	}
-
 	nat := models.NatsConf{Nc: pm.nc, Topic: pm.cfg.NatsTopic}
 
-	// Запускаем новый экземпляр протокола
-	err := protocolInstance.Start(int(portNumber), nat)
+	err := portInfo.ProtocolInstance.Start(int(portNumber), nat)
 	if err != nil {
 		return err
 	}
 
-	// Обновляем экземпляр протокола в информации о порте
 	pm.mu.Lock()
-	portInfo.ProtocolInstance = protocolInstance
 	portInfo.Active = true
 	pm.mu.Unlock()
 
-	pm.logger.Infof("Started port %d with new protocol instance", portNumber)
+	pm.logger.Infof("Started port %d", portNumber)
 	return nil
 }
 

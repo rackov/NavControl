@@ -1,12 +1,19 @@
-description = "description writer"
-name = "test writer"
-id_sm = 0
+description = "Пример конфигурации для ControlWriter"
+name = "writer-service"
+id_sm = 1
 ip_sm = ""
-grpc_port = 50001
-metric_port = 9995
-nats_address = "nats://192.168.194.242:4222"
-nats_topic = "nav.data"
+grpc_port = 50051
+metric_port = 9091
+nats_address = "nats://localhost:4222"
+nats_topic = "nav.*"
 nats_timeout = 5
+id_writer = 1
+db_ip = "localhost"
+db_port = 5432
+db_name = "nsm"
+db_user = "nsmsave"
+db_pass = "rr1971"
+db_table = "one.temp"
 
 [log_config]
 log_level = "info"

@@ -10,9 +10,9 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/naoina/toml"
+	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/proto"
-	log "github.com/sirupsen/logrus"
 )
 
 type SendServer struct {
@@ -29,27 +29,24 @@ type SendServer struct {
 	errorCon    error
 	mutex       *sync.Mutex
 	restart     bool
-	logger      *logger.Logger
+	log         *logger.Logger
 }
 
-func Open(fname string) (srv SendServer, er error) {
-	srv = SendServer{}
-
-	f, err := os.Open(fname)
-
-	if err != nil {
-		return srv, err
+func NewRetranslator(conf *config.ControlRetranslator, log *logger.Logger) *SendServer {
+	return &SendServer{
+		ServiceName: conf.Name,
+		PortList:    conf.GrpcPort,
+		IpDb:        conf.DbIp,
+		PortDb:      conf.DbPort,
+		User:        conf.DbUser,
+		Passw:       conf.DbPass,
+		DbName:      conf.DbName,
+		servOut:     make(ArrConn, 0),
+		sigChan:     make(chan struct{}, 1),
+		mutex:       &sync.Mutex{},
+		restart:     false,
+		log:         log,
 	}
-	defer f.Close()
-
-	if err = toml.NewDecoder(f).Decode(&srv); err != nil {
-		return srv, err
-	}
-
-	srv, err = New(&srv)
-
-	return srv, err
-
 }
 func (s *SendServer) Save(fname string) error {
 	f, err := os.Create(fname)
@@ -60,24 +57,6 @@ func (s *SendServer) Save(fname string) error {
 	defer f.Close()
 	return toml.NewEncoder(f).Encode(s)
 }
-func New(send *SendServer) (sn SendServer, err error) {
-
-	sn = SendServer{
-		ServiceName: send.ServiceName,
-		PortList:    send.PortList,
-		User:        send.User,
-		IpDb:        send.IpDb,
-		DbName:      send.DbName,
-		Passw:       send.Passw,
-		PortDb:      send.PortDb,
-		servOut:     make(ArrConn, 0),
-		mutex:       &sync.Mutex{},
-		restart:     false,
-	}
-
-	return sn, err
-}
-
 func (s *SendServer) sendPkg(db *sql.DB) {
 	for _, cl := range s.servOut {
 		cl.db = db
@@ -92,13 +71,13 @@ func (s *SendServer) Run() {
 	// Запуск -- инициализация
 	err := s.db_open()
 	if err != nil {
-		log.Info("Ошибка подключения к базе ", err)
+		s.log.Info("Ошибка подключения к базе ", err)
 		return
 	}
 
 	err = s.read()
 	if err != nil {
-		log.Info("Ошибка инициализации списка ", err)
+		s.log.Info("Ошибка инициализации списка ", err)
 
 		return
 	}
@@ -109,7 +88,7 @@ func (s *SendServer) Run() {
 	for {
 		select {
 		case <-s.sigChan:
-			log.Info("Shutting down ")
+			s.log.Info("Shutting down ")
 			if s.db != nil {
 				s.db.Close()
 				s.db = nil
@@ -121,9 +100,9 @@ func (s *SendServer) Run() {
 			if s.errorCon = s.db.Ping(); s.errorCon != nil {
 
 				errb := s.db_open()
-				log.Info("Open db ", errb)
+				s.log.Info("Open db ", errb)
 			} else if s.restart {
-				log.Info("Restart send ")
+				s.log.Info("Restart send ")
 
 				s.restart = false
 				s.sendPkg(s.db)
@@ -213,7 +192,7 @@ func (s *SendServer) db_open() error {
 
 	s.db, err = sql.Open("postgres", constr)
 	if err != nil {
-		//		log.Info("Ошибка открытия соединения:", err)
+		s.log.Info("Ошибка открытия соединения:", err)
 		return err
 	}
 	s.restart = true
@@ -232,7 +211,7 @@ func (s *SendServer) ListClient() (*proto.Clients, error) {
 	rows, err := s.db.Query(sql)
 
 	if err != nil {
-		log.Info("Ошибка выполнения запроса:", err)
+		s.log.Info("Ошибка выполнения запроса:", err)
 		return &clients, err
 	}
 
@@ -242,12 +221,12 @@ func (s *SendServer) ListClient() (*proto.Clients, error) {
 		str := ""
 		err := rows.Scan(&str)
 		if err != nil {
-			log.Info("Ошибка чтения строки:", err)
+			s.log.Info("Ошибка чтения строки:", err)
 			return &clients, err
 		}
 		err1 := json.Unmarshal([]byte(str), &cl)
 		if err1 != nil {
-			log.Info("Ошибка чтения listing client:", err)
+			s.log.Info("Ошибка чтения listing client:", err)
 			return &clients, err
 		}
 		if cl.DeviceList == nil {
@@ -257,7 +236,7 @@ func (s *SendServer) ListClient() (*proto.Clients, error) {
 		clients.Clients = append(clients.Clients, &cl)
 	}
 	if err := rows.Err(); err != nil {
-		log.Info("Ошибка перебора строк:", err)
+		s.log.Info("Ошибка перебора строк:", err)
 		return &clients, err
 	}
 	rows.Close()
@@ -315,12 +294,12 @@ func (s *SendServer) ListDevices(set *proto.SetClient) (*proto.Devices, error) {
 		cl := proto.Device{}
 		err = rows.Scan(&str)
 		if err != nil {
-			log.Info("Ошибка чтения строки:", err)
+			s.log.Info("Ошибка чтения строки:", err)
 			return &devs, err
 		}
 		err1 := json.Unmarshal([]byte(str), &cl)
 		if err1 != nil {
-			log.Info("Ошибка чтения list_device:", err)
+			s.log.Info("Ошибка чтения list_device:", err)
 			return &devs, err
 		}
 
@@ -384,7 +363,7 @@ func (s *SendServer) AddClient(insCl *proto.Client) (newCl *proto.Client, err er
 	}
 	id, err := s.insertCl(insCl)
 	if err != nil {
-		log.Info("Error insert DB ", err)
+		s.log.Info("Error insert DB ", err)
 		return insCl, err
 	}
 	insCl.IdRetranslator = int32(id)
@@ -465,19 +444,19 @@ func (s *SendServer) read() error {
 	rows, err := s.db.Query(sql)
 
 	if err != nil {
-		log.Info("Ошибка выполнения запроса:", err)
+		s.log.Info("Ошибка выполнения запроса:", err)
 		return err
 	}
 	for rows.Next() {
 		cl := SendConnect{}
 		err := rows.Scan(&cl.IdClient, &cl.Param.Ip, &cl.Param.Port, &cl.Param.Protocol, &list_field, &cl.Active)
 		if err != nil {
-			log.Info("Ошибка чтения строки:", err)
+			s.log.Info("Ошибка чтения строки:", err)
 			return err
 		}
 		err1 := json.Unmarshal([]byte(list_field), &cl.Field)
 		if err1 != nil {
-			log.Info("Ошибка чтения list_field:", err)
+			s.log.Info("Ошибка чтения list_field:", err)
 			continue
 		}
 		cl.IdRec = 1
@@ -486,10 +465,10 @@ func (s *SendServer) read() error {
 	}
 	// Проверяем, есть ли ошибки во время перебора строк
 	if err := rows.Err(); err != nil {
-		log.Info("Ошибка перебора строк:", err)
+		s.log.Info("Ошибка перебора строк:", err)
 		return err
 	}
-	log.Info("Инициализация клиентов  telematic.v_list_client")
+	s.log.Info("Инициализация клиентов  telematic.v_list_client")
 	rows.Close()
 	return err
 

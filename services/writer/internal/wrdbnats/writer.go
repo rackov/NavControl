@@ -42,6 +42,7 @@ func (hs *HubServer) ListService() string {
 }
 
 func (hs *HubServer) Run() {
+	hs.logger.Info("Запуск сервера Writer")
 	for {
 		select {
 		case hclient := <-hs.register:
@@ -105,7 +106,7 @@ func (hs *HubServer) DownService(idSm int, idWriter int) error {
 }
 
 func (hs *HubServer) AddService() error {
-	hclient, err := New(hs.config)
+	hclient, err := New(hs.config, hs.logger)
 	if err != nil {
 		// log.Info("Err Write ", err)
 		return err
