@@ -1,44 +1,45 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/monitoring"
 	"github.com/rackov/NavControl/services/writer/internal/mgrpc"
+	"github.com/rackov/NavControl/services/writer/internal/wrdbnats"
 )
 
 func main() {
 
-	//	configPath := flag.String("config", "NavControl/cfg/receiver.toml", "путь к файлу конфигурации")
-	//	flag.Parse()
+	configPath := flag.String("config", "NavControl/cfg/writer.toml", "путь к файлу конфигурации")
+	flag.Parse()
 
-	cfg := config.ConfigLog{
-		LogLevel:    "info",
-		LogFilePath: "logs/writer.log",
-		MaxSize:     100,
-		MaxBackups:  3,
-		MaxAge:      28,
-		Compress:    true,
-	}
+	config := config.NewWriter()
+	config.LoadConfig(*configPath)
 
-	log, err := logger.NewLogger(cfg)
+	log, err := logger.NewLogger(config.LogConfig)
 	if err != nil {
 		log.Fatalf("Failed to create logger: %v", err)
 
 	}
 
+	hub := wrdbnats.NewHubServer(config, log)
+	go hub.Run()
+	hub.AddService()
+
 	// Запускаем сервер для сбора метрик
 	go func() {
-		if err := monitoring.StartMetricsServer(9999); err != nil {
+		if err := monitoring.StartMetricsServer(config.MetricPort); err != nil {
 			log.Printf("Failed to start metrics server: %v\n", err)
 		}
 	}()
 
 	// Регистрируем наш сервис
-	grpcService := mgrpc.NewGRPCServer(log)
+	grpcService := mgrpc.NewGRPCServer(hub)
 
 	// Запускаем сервер gRPC
-	if err := grpcService.StartGRPCServer(50001); err != nil {
+	if err := grpcService.StartGRPCServer(config.GrpcPort); err != nil {
 		log.Fatalf("Failed to start gRPC server: %v", err)
 	}
 

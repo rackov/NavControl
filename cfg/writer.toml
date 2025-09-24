@@ -1,0 +1,17 @@
+description = "description writer"
+name = "test writer"
+id_sm = 0
+ip_sm = ""
+grpc_port = 50001
+metric_port = 9995
+nats_address = "nats://192.168.194.242:4222"
+nats_topic = "nav.data"
+nats_timeout = 5
+
+[log_config]
+log_level = "info"
+log_file_path = "logs/writer.log"
+max_size = 100
+max_backups = 3
+max_age = 28
+compress = true

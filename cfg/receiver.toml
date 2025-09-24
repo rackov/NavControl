@@ -10,7 +10,7 @@ nats_timeout = 5
 
 [log_config]
 log_level = "info"
-log_file_path = "logs/app.log"
+log_file_path = "logs/receiver.log"
 max_size = 100
 max_backups = 3
 max_age = 28

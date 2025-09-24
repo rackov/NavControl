@@ -8,6 +8,7 @@ import (
 
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/proto"
+	"github.com/rackov/NavControl/services/writer/internal/wrdbnats"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -15,26 +16,28 @@ import (
 
 // GRPCServer реализует gRPC сервер
 type GRPCServer struct {
-	// pm     *PortManager
 	logger *logger.Logger
+	wrman  *wrdbnats.HubServer
 
 	proto.UnimplementedServiceInfoServer
 }
 
-func NewGRPCServer(l *logger.Logger) *GRPCServer {
+func NewGRPCServer(wrman *wrdbnats.HubServer) *GRPCServer {
 	return &GRPCServer{
-		logger: l,
+		wrman:  wrman,
+		logger: wrman.GetLogger(),
 	}
 }
 func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.ServiceManager, error) {
+	conf := s.wrman.GetConfig()
 	return &proto.ServiceManager{
-		PortSm:      int32(50001),
+		PortSm:      int32(conf.GrpcPort),
 		TypeSm:      "WRITER",
 		IpBroker:    "192.168.194.242",
 		PortBroker:  4222,
-		TopicBroker: "nav.*",
+		TopicBroker: conf.NatsTopic,
 		Active:      true,
-		LogLevel:    "info",
+		LogLevel:    conf.LogConfig.LogLevel,
 	}, nil
 }
 
@@ -56,4 +59,51 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 	s.logger.Infof("gRPC server started on port %d", port)
 
 	return grpcServer.Serve(lis)
+}
+
+// GetLogLevel возвращает текущий уровень логирования
+func (s *GRPCServer) GetLogLevel(ctx context.Context, _ *emptypb.Empty) (*proto.LogLevelResponse, error) {
+	level := s.logger.GetLevel()
+	return &proto.LogLevelResponse{
+		Level:   level,
+		Success: true,
+		Message: "Current log level: " + level,
+	}, nil
+}
+
+// SetLogLevel устанавливает уровень логирования
+func (s *GRPCServer) SetLogLevel(ctx context.Context, req *proto.SetLogLevelRequest) (*proto.SetLogLevelResponse, error) {
+	err := s.logger.SetLevel(req.Level)
+	if err != nil {
+		s.logger.Errorf("Failed to set log level: %v", err)
+		return &proto.SetLogLevelResponse{
+			Success: false,
+		}, nil
+	}
+
+	s.logger.Infof("Log level changed to %s", req.Level)
+	return &proto.SetLogLevelResponse{
+		Success: true,
+	}, nil
+}
+
+// ReadLogs читает логи с применением фильтров
+func (s *GRPCServer) ReadLogs(ctx context.Context, req *proto.ReadLogsRequest) (*proto.ReadLogsResponse, error) {
+	// Получаем логи с фильтрами
+
+	s.logger.Info("Reading logs")
+	logs, err := s.logger.ReadLogs(req.Level, req.StartDate, req.EndDate, req.Limit)
+	if err != nil {
+		s.logger.Errorf("Failed to read logs: %v", err)
+		return &proto.ReadLogsResponse{
+			Success: false,
+			Message: "Failed to read logs: " + err.Error(),
+		}, nil
+	}
+
+	return &proto.ReadLogsResponse{
+		LogLines: logs,
+		Success:  true,
+		Message:  "Logs retrieved successfully",
+	}, nil
 }
