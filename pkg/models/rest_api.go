@@ -77,15 +77,16 @@ type ServiceModule struct {
 }
 
 type ReceiverModule struct {
-	IDReceiver   int    `json:"id_receiver"`
-	IDSm         int    `json:"id_sm"`
-	IPReceiver   string `json:"ip_receiver"`
-	Active       bool   `json:"active"`
-	Name         string `json:"name"`
-	PortReceiver int    `json:"port_receiver"`
-	Protocol     string `json:"protocol"`
-	Status       string `json:"status"`
-	Description  string `json:"description"`
+	IDReceiver       int    `json:"id_receiver"`
+	IDSm             int    `json:"id_sm"`
+	Active           bool   `json:"active"`
+	Name             string `json:"name"`
+	PortReceiver     int    `json:"port_receiver"`
+	Protocol         string `json:"protocol"`
+	Status           string `json:"status"`
+	ErrorMsg         string `json:"error_msg"`
+	Description      string `json:"description"`
+	ConnectionsCount int    `json:"connections_count"`
 }
 
 type WriterModule struct {
@@ -134,7 +135,6 @@ func NewToOldReceiver(r *ReceiverModule, s *ServiceModule) *ReceiverModuleOld {
 	return &ReceiverModuleOld{
 		IDReceiver:   r.IDReceiver,
 		IDSm:         r.IDSm,
-		IPReceiver:   r.IPReceiver,
 		IsActive:     r.Active,
 		Name:         r.Name,
 		KeyNats:      s.TopicBroker,

@@ -23,6 +23,7 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.POST("/sm", h.CreateServiceModule)
 		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
 		// Receiver
+		controller.GET("/receiver", h.ListPortAllSm)
 		controller.GET("/receiver/:id_sm", h.ListPorts)
 		controller.POST("/receiver", h.AddPort)
 		controller.PATCH("/receiver/:id_sm/:id_rec", h.ChangeActive) // ClosePort, OpenPort

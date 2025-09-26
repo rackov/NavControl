@@ -6,9 +6,47 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+func (h *Handler) ListPortAllSm(c *gin.Context) {
+	responseNew := []models.ReceiverModule{}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, client := range h.services {
+		manager, err := client.GetServiceManager(c.Request.Context())
+		if err != nil {
+			continue
+		}
+		if manager.TypeSm != "RECEIVER" {
+			continue
+		}
+		response, err := client.ReceiverClient().ListPorts(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			continue
+
+		}
+		for _, r := range response.Ports {
+			responseNew = append(responseNew,
+				models.ReceiverModule{
+					IDReceiver:       int(r.IdReceiver),
+					IDSm:             manager.IdSm,
+					Name:             r.Name,
+					PortReceiver:     int(r.PortReceiver),
+					Protocol:         r.Protocol,
+					Active:           r.Active,
+					Status:           r.Status,
+					Description:      r.Description,
+					ErrorMsg:         "",
+					ConnectionsCount: int(r.ConnectionsCount),
+				})
+		}
+	}
+	c.JSON(http.StatusOK, responseNew)
+}
 
 // ListPorts получает список портов для указанного сервиса
 func (h *Handler) ListPorts(c *gin.Context) {
@@ -44,8 +82,23 @@ func (h *Handler) ListPorts(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	c.JSON(http.StatusOK, response)
+	responseNew := []models.ReceiverModule{}
+	for _, r := range response.Ports {
+		responseNew = append(responseNew,
+			models.ReceiverModule{
+				IDReceiver:       int(r.IdReceiver),
+				IDSm:             id,
+				Name:             r.Name,
+				PortReceiver:     int(r.PortReceiver),
+				Protocol:         r.Protocol,
+				Active:           r.Active,
+				Status:           r.Status,
+				Description:      r.Description,
+				ErrorMsg:         "",
+				ConnectionsCount: int(r.ConnectionsCount),
+			})
+	}
+	c.JSON(http.StatusOK, responseNew)
 }
 
 // GetPortStatus получает статус порта
