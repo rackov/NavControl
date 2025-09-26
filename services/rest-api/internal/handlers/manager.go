@@ -272,7 +272,16 @@ func (h *Handler) CreateServiceModule(c *gin.Context) {
 	h.cfg.ServiceList = append(h.cfg.ServiceList, req)
 
 	h.logger.Infof("Successfully created new service of type %s at %s:%d", req.TypeSm, req.IpSm, req.PortSm)
-	h.cfg.SaveCfg()
+	// if err:=h.cfg.SaveCfg(), err!=nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось сохранить конфигурацию"})
+	// 	return
+	// }
+	err = h.cfg.SaveCfg()
+	if err != nil {
+		h.logger.Errorf("Невозможно сохранить конфигурацию: %v", err)
+		return
+	}
+
 	// Возвращаем успешный ответ
 	c.JSON(http.StatusCreated, req)
 }
@@ -303,7 +312,11 @@ func (h *Handler) DeleteServiceModule(c *gin.Context) {
 	idind := h.findId(idInt)
 	if idind != -1 {
 		h.cfg.ServiceList = append(h.cfg.ServiceList[:idind], h.cfg.ServiceList[idind+1:]...)
-		h.cfg.SaveCfg()
+		err = h.cfg.SaveCfg()
+		if err != nil {
+			h.logger.Errorf("Невозможно сохранить конфигурацию: %v", err)
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, conf)

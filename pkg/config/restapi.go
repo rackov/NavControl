@@ -7,21 +7,21 @@ import (
 	"github.com/naoina/toml"
 )
 
-// type CfgCors struct {
-// 	AllowAllOrigins           bool
-// 	AllowOrigins              []string
-// 	AllowMethods              []string
-// 	AllowPrivateNetwork       bool
-// 	AllowHeaders              []string
-// 	AllowCredentials          bool
-// 	ExposeHeaders             []string
-// 	AllowWildcard             bool
-// 	AllowBrowserExtensions    bool
-// 	CustomSchemas             []string
-// 	AllowWebSockets           bool
-// 	AllowFiles                bool
-// 	OptionsResponseStatusCode int
-// }
+type CfgCors struct {
+	AllowAllOrigins           bool
+	AllowOrigins              []string
+	AllowMethods              []string
+	AllowPrivateNetwork       bool
+	AllowHeaders              []string
+	AllowCredentials          bool
+	ExposeHeaders             []string
+	AllowWildcard             bool
+	AllowBrowserExtensions    bool
+	CustomSchemas             []string
+	AllowWebSockets           bool
+	AllowFiles                bool
+	OptionsResponseStatusCode int
+}
 
 type ServiceManager struct {
 	IdSm        int    `json:"id_sm"`
@@ -42,12 +42,41 @@ type ServiceManager struct {
 type CfgRestApi struct {
 	RestPort       int              `toml:"rest_port"`
 	MetricPort     int              `toml:"metric_port"`
-	Cors           cors.Config      `toml:"cors"`
+	Cors           CfgCors          `toml:"cors"`
+	LogConfig      ConfigLog        `toml:"log_config"`
 	ServiceList    []ServiceManager `toml:"service_list"`
 	FileConfigPath string           `toml:"-"`
 	FileLogPath    string           `toml:"-"`
 }
 
+func NewCfgRestApi(filePath string) (*CfgRestApi, error) {
+	cfg := CfgRestApi{
+		FileConfigPath: filePath,
+	}
+	err := cfg.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &cfg, nil
+}
+func (s *CfgRestApi) RetCors() cors.Config {
+
+	return cors.Config{
+		AllowOrigins:              s.Cors.AllowOrigins,
+		AllowMethods:              s.Cors.AllowMethods,
+		AllowAllOrigins:           s.Cors.AllowAllOrigins,
+		AllowHeaders:              s.Cors.AllowHeaders,
+		ExposeHeaders:             s.Cors.ExposeHeaders,
+		AllowCredentials:          s.Cors.AllowCredentials,
+		AllowPrivateNetwork:       s.Cors.AllowPrivateNetwork,
+		AllowWildcard:             s.Cors.AllowWildcard,
+		AllowBrowserExtensions:    s.Cors.AllowBrowserExtensions,
+		AllowWebSockets:           s.Cors.AllowWebSockets,
+		AllowFiles:                s.Cors.AllowFiles,
+		OptionsResponseStatusCode: s.Cors.OptionsResponseStatusCode,
+	}
+
+}
 func (s *CfgRestApi) LoadConfig() error {
 	f, err := os.Open(s.FileConfigPath)
 

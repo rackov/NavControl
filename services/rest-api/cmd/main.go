@@ -45,24 +45,17 @@ func main() {
 	configPath := flag.String("config", "NavControl/cfg/restapi.toml", "путь к файлу конфигурации")
 	flag.Parse()
 
-	cfg := config.ConfigLog{
-		LogLevel:    "info",
-		LogFilePath: "logs/restapi.log",
-		MaxSize:     100,
-		MaxBackups:  3,
-		MaxAge:      28,
-		Compress:    true,
+	crest, err := config.NewCfgRestApi(*configPath)
+
+	if err != nil {
+		fmt.Printf("Failed to load config: %v", err)
+		return
 	}
 
-	log, err := logger.NewLogger(cfg)
+	log, err := logger.NewLogger(crest.LogConfig)
 	if err != nil {
 		log.Fatalf("Failed to create logger: %v", err)
 
-	}
-	crest := config.CfgRestApi{}
-	crest.FileConfigPath = *configPath
-	if err = crest.LoadConfig(); err != nil {
-		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	log.Info("Starting monitorig service")
@@ -92,11 +85,11 @@ func main() {
 	// 		latency,
 	// 	)
 	// })
-
-	router.Use(cors.New(crest.Cors))
+	con_cors := crest.RetCors()
+	router.Use(cors.New(con_cors))
 
 	// Инициализация обработчиков с передачей логгера
-	h, err := handlers.NewHandler(&crest, log)
+	h, err := handlers.NewHandler(crest, log)
 	if err != nil {
 		log.Fatalf("Failed to create handlers: %v", err)
 	}

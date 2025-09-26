@@ -3,7 +3,7 @@ name = "test receiver"
 id_sm = 0
 ip_sm = ""
 grpc_port = 50000
-metric_port = 9997
+metric_port = 9902
 nats_address = "nats://192.168.194.242:4222"
 nats_topic = "nav.data"
 nats_timeout = 5
@@ -17,10 +17,10 @@ max_age = 28
 compress = true
 
 [[receivers]]
-id_receiver = 6
+id_receiver = 1
 active = true
 name = "Main Receiver"
-port_receiver = 8980
+port_receiver = 9500
 protocol = "EGTS"
 status = ""
 description = "Primary data receiver"
@@ -29,39 +29,9 @@ connections_count = 0
 [[receivers]]
 id_receiver = 2
 active = true
-name = "Backup Receiver"
-port_receiver = 8980
-protocol = "EGTS"
-status = "ok"
-description = "Backup data receiver"
-connections_count = 5
-
-[[receivers]]
-id_receiver = 3
-active = true
 name = "Test Scenario Port"
-port_receiver = 8982
+port_receiver = 9501
 protocol = "Arnavi"
 status = "ok"
 description = ""
-connections_count = 0
-
-[[receivers]]
-id_receiver = 7
-active = true
-name = "Main Receiver"
-port_receiver = 8985
-protocol = "EGTS"
-status = ""
-description = "Primary data receiver"
-connections_count = 0
-
-[[receivers]]
-id_receiver = 8
-active = true
-name = "Main Receiver"
-port_receiver = 8988
-protocol = "EGTS"
-status = ""
-description = "Primary data receiver"
 connections_count = 0

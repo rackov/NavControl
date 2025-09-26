@@ -212,6 +212,10 @@ func (pm *PortManager) ListPorts() ([]*proto.PortDefinition, error) {
 				clients := arnaviProto.GetClients()
 				connectionsCount = int32(len(clients))
 			}
+			if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
+				clients := egtsProto.GetClients()
+				connectionsCount = int32(len(clients))
+			}
 		}
 		pdef := portInfoToProto(portInfo)
 		pdef.ConnectionsCount = connectionsCount

@@ -16,19 +16,13 @@ allow_web_sockets = false
 allow_files = false
 options_response_status_code = 0
 
-[[service_list]]
-id_sm = 1
-ip_sm = "192.168.194.125"
-port_sm = 50000
-name = "Прием данных"
-type_sm = "RECEIVER"
-ip_broker = "192.168.194.242"
-port_broker = 1883
-topic_broker = "nav.data"
-active = true
-status = "running"
-description = "Primary service manager for sensor data"
+[log_config]
 log_level = "info"
+log_file_path = "logs/receiver.log"
+max_size = 100
+max_backups = 3
+max_age = 28
+compress = true
 
 [[service_list]]
 id_sm = 2
