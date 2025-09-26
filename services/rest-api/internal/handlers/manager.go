@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/config"
@@ -96,13 +97,14 @@ func (h *Handler) SetLogLevel(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
+	req.Level = strings.ToLower(req.Level)
 	// Вызываем gRPC метод для установки уровня логирования
 	response, err := client.SetLogLevel(c.Request.Context(), req.Level)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	// response. = strings.ToUpper(response.Level)
 
 	c.JSON(http.StatusOK, response)
 }
@@ -194,6 +196,7 @@ func (h *Handler) GetServiceModules(c *gin.Context) {
 		}
 		h.logger.Infof("Received service manager: %v", manager)
 		// manager.IdSm = int32(id)
+		manager.LogLevel = strings.ToUpper(manager.LogLevel)
 		result = append(result, manager)
 	}
 

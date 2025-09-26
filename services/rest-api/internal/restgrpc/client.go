@@ -131,9 +131,10 @@ func (c *Client) GetServiceManager(ctx context.Context) (*config.ServiceManager,
 		return &c.info, err
 	}
 
-	c.logger.Infof("Successfully received ServiceManager: %+v", manager)
+	c.logger.Infof("Successfully  ServiceManager: %+v", manager)
 	c.info.Active = true
 	c.info.Status = "online"
+	c.info.LogLevel = manager.LogLevel
 	c.info.ErrorMsg = ""
 	c.info.TypeSm = manager.TypeSm
 	c.info.IpBroker = manager.IpBroker

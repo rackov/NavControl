@@ -37,3 +37,17 @@ active = true
 status = "online"
 description = ""
 log_level = ""
+
+[[service_list]]
+id_sm = 3
+ip_sm = "localhost"
+port_sm = 50000
+name = "Прием данных"
+type_sm = "RECEIVER"
+ip_broker = "localhost"
+port_broker = 4222
+topic_broker = "nav.data"
+active = true
+status = "online"
+description = ""
+log_level = ""
