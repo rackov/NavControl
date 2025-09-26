@@ -1,0 +1,12 @@
+[Unit]
+Description=writer
+After=network.target
+
+[Service]
+ExecStart=/home/vladimir/navcontrol/writer/writer -config "writer.toml"
+WorkingDirectory=/home/vladimir/navcontrol/writer
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

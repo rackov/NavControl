@@ -1,0 +1,24 @@
+description = "Пример конфигурации для ControlRetranslator"
+name = "retranslator-service"
+id_sm = 2
+ip_sm = "192.168.30.165"
+grpc_port = 50003
+metric_port = 9903
+# nats_address = "nats://localhost:4222"
+# nats_topic = "nav.*"
+# nats_timeout = 5
+id_writer = 1
+db_ip = "localhost"
+db_port = 5432
+db_name = "navigation"
+db_user = "navadmin"
+db_pass = "n1a2v3Ad$$"
+db_table = "one.temp"
+
+[log_config]
+log_level = "info"
+log_file_path = "logs/retranslator.log"
+max_size = 100
+max_backups = 3
+max_age = 28
+compress = true

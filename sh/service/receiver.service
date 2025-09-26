@@ -1,0 +1,12 @@
+[Unit]
+Description=receiver
+After=network.target
+
+[Service]
+ExecStart=/home/vladimir/navcontrol/receiver/receiver -config "receiver.toml"
+WorkingDirectory=/home/vladimir/navcontrol/receiver
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

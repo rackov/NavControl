@@ -1,0 +1,12 @@
+[Unit]
+Description=retranslator
+After=network.target
+
+[Service]
+ExecStart=/home/vladimir/navcontrol/retranslator/retranslator -config "retranslator.toml"
+WorkingDirectory=/home/vladimir/navcontrol/retranslator
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

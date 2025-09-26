@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/config"
 	"github.com/rackov/NavControl/pkg/logger"
@@ -73,25 +73,28 @@ func main() {
 		}
 	}()
 	router := gin.New()
-	router.Use(func(c *gin.Context) {
-		start := time.Now()
-		path := c.Request.URL.Path
+	// router.Use(func(c *gin.Context) {
+	// 	start := time.Now()
+	// 	path := c.Request.URL.Path
 
-		c.Next()
+	// 	c.Next()
 
-		latency := time.Since(start)
-		clientIP := c.ClientIP()
-		method := c.Request.Method
-		statusCode := c.Writer.Status()
+	// 	latency := time.Since(start)
+	// 	clientIP := c.ClientIP()
+	// 	method := c.Request.Method
+	// 	statusCode := c.Writer.Status()
 
-		log.Infof("%s %s %s %d %v",
-			method,
-			path,
-			clientIP,
-			statusCode,
-			latency,
-		)
-	})
+	// 	log.Infof("%s %s %s %d %v",
+	// 		method,
+	// 		path,
+	// 		clientIP,
+	// 		statusCode,
+	// 		latency,
+	// 	)
+	// })
+
+	router.Use(cors.New(crest.Cors))
+
 	// Инициализация обработчиков с передачей логгера
 	h, err := handlers.NewHandler(&crest, log)
 	if err != nil {

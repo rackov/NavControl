@@ -18,7 +18,7 @@ options_response_status_code = 0
 
 [[service_list]]
 id_sm = 1
-ip_sm = "localhost"
+ip_sm = "192.168.194.125"
 port_sm = 50000
 name = "Прием данных"
 type_sm = "RECEIVER"

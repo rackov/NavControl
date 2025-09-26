@@ -3,24 +3,25 @@ package config
 import (
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/naoina/toml"
 )
 
-type CfgCors struct {
-	AllowAllOrigins           bool
-	AllowOrigins              []string
-	AllowMethods              []string
-	AllowPrivateNetwork       bool
-	AllowHeaders              []string
-	AllowCredentials          bool
-	ExposeHeaders             []string
-	AllowWildcard             bool
-	AllowBrowserExtensions    bool
-	CustomSchemas             []string
-	AllowWebSockets           bool
-	AllowFiles                bool
-	OptionsResponseStatusCode int
-}
+// type CfgCors struct {
+// 	AllowAllOrigins           bool
+// 	AllowOrigins              []string
+// 	AllowMethods              []string
+// 	AllowPrivateNetwork       bool
+// 	AllowHeaders              []string
+// 	AllowCredentials          bool
+// 	ExposeHeaders             []string
+// 	AllowWildcard             bool
+// 	AllowBrowserExtensions    bool
+// 	CustomSchemas             []string
+// 	AllowWebSockets           bool
+// 	AllowFiles                bool
+// 	OptionsResponseStatusCode int
+// }
 
 type ServiceManager struct {
 	IdSm        int    `json:"id_sm"`
@@ -41,7 +42,7 @@ type ServiceManager struct {
 type CfgRestApi struct {
 	RestPort       int              `toml:"rest_port"`
 	MetricPort     int              `toml:"metric_port"`
-	Cors           *CfgCors         `toml:"cors"`
+	Cors           cors.Config      `toml:"cors"`
 	ServiceList    []ServiceManager `toml:"service_list"`
 	FileConfigPath string           `toml:"-"`
 	FileLogPath    string           `toml:"-"`

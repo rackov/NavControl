@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24.6-alpine AS builder
 
 WORKDIR /app
 
@@ -13,14 +13,20 @@ FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+# Установим рабочую директорию в /app как в builder stage
+WORKDIR /app
 
-RUN mkdir -p /log
+# Создаем директорию для логов, которая будет точкой монтирования
+RUN mkdir -p /logs
 
 COPY --from=builder /app/rest-api .
-COPY --from=builder /app/NavControl/cfg ./NavControl/cfg
 
-EXPOSE 8081
-EXPOSE 9091
+# Удаление: COPY --from=builder /app/NavControl/cfg ./NavControl/cfg
+
+EXPOSE 8082
+EXPOSE 9990
+
+# Указываем точку монтирования для логов
+VOLUME ["/logs"]
 
 CMD ["./rest-api", "-config", "NavControl/cfg/restapi.toml"]

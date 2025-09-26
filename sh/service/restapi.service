@@ -1,0 +1,12 @@
+[Unit]
+Description=rest-api
+After=network.target
+
+[Service]
+ExecStart=/home/vladimir/navcontrol/rest-api/rest-api -config "restapi.toml"
+WorkingDirectory=/home/vladimir/navcontrol/rest-api
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

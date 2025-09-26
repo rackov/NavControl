@@ -1,0 +1,24 @@
+description = "Пример конфигурации для ControlWriter"
+name = "writer-service"
+id_sm = 1
+ip_sm = ""
+grpc_port = 50004
+metric_port = 9904
+nats_address = "nats://localhost:4222"
+nats_topic = "nav.*"
+nats_timeout = 5
+id_writer = 1
+db_ip = "localhost" 
+db_port = 5432
+db_name = "navigation"
+db_user = "navadmin"
+db_pass = "n1a2v3Ad$$"
+db_table = "one.temp"
+
+[log_config]
+log_level = "info"
+log_file_path = "logs/writer.log"
+max_size = 100
+max_backups = 3
+max_age = 28
+compress = true
