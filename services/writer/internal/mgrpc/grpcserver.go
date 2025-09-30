@@ -33,7 +33,7 @@ func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.
 	return &proto.ServiceManager{
 		PortSm:      int32(conf.GrpcPort),
 		TypeSm:      "WRITER",
-		IpBroker:    "192.168.194.242",
+		IpBroker:    conf.NatsAddress,
 		PortBroker:  4222,
 		TopicBroker: conf.NatsTopic,
 		Active:      true,
@@ -106,4 +106,11 @@ func (s *GRPCServer) ReadLogs(ctx context.Context, req *proto.ReadLogsRequest) (
 		Success:  true,
 		Message:  "Logs retrieved successfully",
 	}, nil
+}
+
+func (s *GRPCServer) IsEmpty(ctx context.Context, _ *emptypb.Empty) (*proto.IsEmptyVar, error) {
+	return &proto.IsEmptyVar{
+		IsEmpty: true,
+	}, nil
+
 }

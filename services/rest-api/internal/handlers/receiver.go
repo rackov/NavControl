@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func (h *Handler) ListPortAllSm(c *gin.Context) {
+func (h *Handler) ListAllReceiver(c *gin.Context) {
 	responseNew := []models.ReceiverModule{}
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -357,19 +357,28 @@ func (h *Handler) DeletePort(c *gin.Context) {
 		return
 	}
 
-	// Получаем информацию о порте
-	request := &proto.GetClientsRequest{
-		PortReceiver: int32(idRec),
-	}
-
-	port, err := client.ReceiverClient().GetPortStatus(context.Background(), request)
+	// Получаем список портов
+	listResponse, err := client.ReceiverClient().ListPorts(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	var portToDelete *proto.PortDefinition
+	for _, r := range listResponse.Ports {
+		if int(r.IdReceiver) == idRec {
+			portToDelete = r
+			break
+
+		}
+	}
+
+	if portToDelete == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Port not found"})
+		return
+	}
 	// Вызываем gRPC метод для удаления порта
-	response, err := client.ReceiverClient().DeletePort(context.Background(), port)
+	response, err := client.ReceiverClient().DeletePort(context.Background(), portToDelete)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

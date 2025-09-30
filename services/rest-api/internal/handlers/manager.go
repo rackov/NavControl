@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/config"
+	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/rest-api/internal/restgrpc"
 )
@@ -227,23 +229,70 @@ func (h *Handler) findId(idSm int) int {
 	}
 	return -1
 }
+func (h *Handler) checkIpPort(ip string, port int) error {
+	ipf := ""
+	ips := ""
+	containf := false
+	contains := false
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, rf := range h.cfg.ServiceList {
+
+		containf = strings.Contains(rf.IpSm, "127.0.0.")
+		contains = strings.Contains(ip, "127.0.0.")
+		if (ip == "localhost") || contains {
+			ipf = "localhost"
+		} else {
+			ipf = ip
+		}
+		if (rf.IpSm == "localhost") || containf {
+			ips = "localhost"
+		} else {
+			ips = rf.IpSm
+		}
+		if (ipf == ips) && (rf.PortSm == port) {
+
+			return fmt.Errorf("The service already exists")
+		}
+
+	}
+	return nil
+}
 
 // создание сервиса через POST
 func (h *Handler) CreateServiceModule(c *gin.Context) {
 	h.logger.Info("Received request to create a new service")
 
+	errUse := models.UsesMsgError{}
 	// Определяем структуру для входных данных
 	var req config.ServiceManager
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Errorf("Failed to bind request JSON: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+
+	if err := h.checkIpPort(req.IpSm, req.PortSm); err != nil {
+		h.logger.Errorf("Failed service is : %v", err)
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Сервис уже существует"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что тип сервиса корректен
 	if req.TypeSm != "RECEIVER" && req.TypeSm != "WRITER" && req.TypeSm != "RETRANSLATOR" {
 		h.logger.Errorf("Invalid service type: %s", req.TypeSm)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service type"})
+		errUse.ErrorMsg = fmt.Sprintf("Invalid service type: %s", req.TypeSm)
+		errUse.ErrorTitle = "Тип сервиса некорректен или не зарегистрирован"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 	req.IdSm = h.maxId() + 1
@@ -255,21 +304,38 @@ func (h *Handler) CreateServiceModule(c *gin.Context) {
 	client, err := restgrpc.NewClient(req, h.logger)
 	if err != nil {
 		h.logger.Errorf("Failed to create gRPC client: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка при создании gRPC клиента"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		h.logger.Errorf("Не возможно подключится к сурвису: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		h.logger.Errorf("Не возможно подключится к сервису: %v", err)
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не возможно подключится к сервису"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 	if manager.TypeSm != req.TypeSm {
 		h.logger.Errorf("Не верный тип сервиса %s", manager.TypeSm)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Не верный тип сервиса"})
+		errUse.ErrorMsg = fmt.Sprintf("Invalid service type: %s", req.TypeSm)
+		errUse.ErrorTitle = "Не верный тип сервиса на выбранном порту"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 
 	}
+	req.IpBroker = manager.IpBroker
+	req.PortBroker = manager.PortBroker
+	req.TopicBroker = manager.TopicBroker
+	req.Name = manager.Name
+	req.Description = manager.Description
+	req.LogLevel = manager.LogLevel
+	req.TypeSm = manager.TypeSm
+
 	// Добавляем клиент в карту сервисов
 	h.services[req.IdSm] = client
 	h.cfg.ServiceList = append(h.cfg.ServiceList, req)

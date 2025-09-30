@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/home/vladimir/navcontrol/receiver/receiver -config "receiver.toml"
 WorkingDirectory=/home/vladimir/navcontrol/receiver
+User=vladimir
 
 Restart=always
 

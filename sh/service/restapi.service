@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/home/vladimir/navcontrol/rest-api/rest-api -config "restapi.toml"
 WorkingDirectory=/home/vladimir/navcontrol/rest-api
+User=vladimir
 
 Restart=always
 

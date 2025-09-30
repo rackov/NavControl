@@ -20,7 +20,7 @@ else
 fi
 
 scp /home/vladimir/go/project/NavControl/sh/bin/rest-api vladimir@192.168.194.242:/home/vladimir/navcontrol/rest-api
-scp /home/vladimir/go/project/NavControl/sh/bin/restapi.toml vladimir@192.168.194.242:/home/vladimir/navcontrol/rest-api
+# scp /home/vladimir/go/project/NavControl/sh/bin/restapi.toml vladimir@192.168.194.242:/home/vladimir/navcontrol/rest-api
 
 ssh "$USER@$REMOTE_HOST" "sudo systemctl start $SERVICE_NAME"
 if [ $? -eq 0 ]; then

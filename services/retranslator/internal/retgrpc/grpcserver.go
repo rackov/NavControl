@@ -33,9 +33,9 @@ func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.
 	return &proto.ServiceManager{
 		PortSm:      int32(50001),
 		TypeSm:      "RETRANSLATOR",
-		IpBroker:    "192.168.194.242",
-		PortBroker:  4222,
-		TopicBroker: "nav.*",
+		IpBroker:    "",
+		PortBroker:  0,
+		TopicBroker: "",
 		Active:      true,
 		LogLevel:    "info",
 	}, nil
@@ -88,6 +88,23 @@ func (s *GRPCServer) DownClient(ctx context.Context, st *proto.SetClient) (*prot
 func (s *GRPCServer) UpClient(ctx context.Context, st *proto.SetClient) (*proto.Client, error) {
 	return s.rst.RunClient(st)
 
+}
+
+func (s *GRPCServer) IsEmpty(ctx context.Context, _ *emptypb.Empty) (*proto.IsEmptyVar, error) {
+	client, err := s.rst.ListClient()
+	if err != nil {
+		return &proto.IsEmptyVar{
+			IsEmpty: true,
+		}, err
+	}
+	if len(client.Clients) == 0 {
+		return &proto.IsEmptyVar{
+			IsEmpty: true,
+		}, nil
+	}
+	return &proto.IsEmptyVar{
+		IsEmpty: false,
+	}, nil
 }
 
 // === Методы LoggingService ===

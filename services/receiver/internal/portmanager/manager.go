@@ -292,17 +292,14 @@ func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) 
 	defer pm.muCfg.Unlock()
 	switch change {
 	case "add":
-		if req.IdReceiver != 0 {
-			cfgrec.IdReceiver = int(req.IdReceiver)
-		} else {
-			cfgrec.IdReceiver = newId
-		}
+		cfgrec.IdReceiver = newId + 1
 		pm.cfg.Receivers = append(pm.cfg.Receivers, cfgrec)
 	case "edit":
 		if index != -1 {
 			pm.cfg.Receivers[index] = cfgrec
 		}
 	case "delete":
+		pm.logger.Infof("Delete port %d", index)
 		if index != -1 {
 			pm.cfg.Receivers = append(pm.cfg.Receivers[:index], pm.cfg.Receivers[index+1:]...)
 
@@ -315,9 +312,9 @@ func (pm *PortManager) findPort(port int) (index int) {
 	pm.muCfg.RLock()
 	defer pm.muCfg.RUnlock()
 	index = -1
-	for _, r := range pm.cfg.Receivers {
+	for i, r := range pm.cfg.Receivers {
 		if r.PortReceiver == port {
-			return index
+			return i
 		}
 	}
 	return index

@@ -197,3 +197,9 @@ func OldToNewService(s *ServiceModuleOld, IpBroker string, PortBroker int, Topic
 		TopicBroker: TopicBroker,
 	}
 }
+
+type UsesMsgError struct {
+	HttpCode   int    `json:"http_code"`
+	ErrorTitle string `json:"error_title"`
+	ErrorMsg   string `json:"error_msg"`
+}

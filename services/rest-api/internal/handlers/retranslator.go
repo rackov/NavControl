@@ -10,6 +10,31 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+func (h *Handler) ListAllRetranslator(c *gin.Context) {
+	responseNew := []*proto.Client{}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, client := range h.services {
+		manager, err := client.GetServiceManager(c.Request.Context())
+		if err != nil {
+			continue
+		}
+		if manager.TypeSm != "RETRANSLATOR" {
+			continue
+		}
+		response, err := client.RetranslatorClient().ListClient(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			continue
+
+		}
+		for _, r := range response.Clients {
+			responseNew = append(responseNew, r)
+		}
+	}
+	c.JSON(http.StatusOK, responseNew)
+}
+
 // ListClient получает список клиентов ретранслятора
 func (h *Handler) ListClient(c *gin.Context) {
 	idSm, err := strconv.Atoi(c.Param("id_sm"))

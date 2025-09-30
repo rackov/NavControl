@@ -275,3 +275,19 @@ func (s *GRPCServer) ReadLogs(ctx context.Context, req *proto.ReadLogsRequest) (
 		Message:  "Logs retrieved successfully",
 	}, nil
 }
+func (s *GRPCServer) IsEmpty(ctx context.Context, _ *emptypb.Empty) (*proto.IsEmptyVar, error) {
+	ports, err := s.pm.ListPorts()
+	if err != nil {
+		return &proto.IsEmptyVar{
+			IsEmpty: true,
+		}, err
+	}
+	if len(ports) == 0 {
+		return &proto.IsEmptyVar{
+			IsEmpty: true,
+		}, nil
+	}
+	return &proto.IsEmptyVar{
+		IsEmpty: false,
+	}, nil
+}

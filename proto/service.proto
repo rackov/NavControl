@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 
 // Общий сервис для получения информации о сервисе
 service ServiceInfo{
+  rpc IsEmpty(google.protobuf.Empty) returns (IsEmptyVar);
   rpc GetInfo(google.protobuf.Empty) returns (ServiceInfoResponse);
   rpc GetServiceManager(google.protobuf.Empty) returns (ServiceManager);
 // ----  сервис для управления логированием на любом из сервисов
@@ -19,6 +20,11 @@ service ServiceInfo{
   rpc ReadLogs(ReadLogsRequest) returns (ReadLogsResponse);
 
 }
+
+message IsEmptyVar{
+  bool is_empty=1;
+}
+
 
 // Ответ с информацией о сервисе
 message ServiceInfoResponse{

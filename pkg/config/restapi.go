@@ -73,6 +73,7 @@ func (s *CfgRestApi) RetCors() cors.Config {
 		AllowBrowserExtensions:    s.Cors.AllowBrowserExtensions,
 		AllowWebSockets:           s.Cors.AllowWebSockets,
 		AllowFiles:                s.Cors.AllowFiles,
+		CustomSchemas:             s.Cors.CustomSchemas,
 		OptionsResponseStatusCode: s.Cors.OptionsResponseStatusCode,
 	}
 

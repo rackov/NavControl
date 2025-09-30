@@ -5,6 +5,7 @@ After=network.target
 [Service]
 ExecStart=/home/vladimir/navcontrol/retranslator/retranslator -config "retranslator.toml"
 WorkingDirectory=/home/vladimir/navcontrol/retranslator
+User=vladimir
 
 Restart=always
 

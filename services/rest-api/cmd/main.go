@@ -13,7 +13,7 @@ import (
 )
 
 func restMan(router *gin.Engine, h *handlers.Handler) {
-	controller := router.Group("/controller")
+	controller := router.Group("/api/v1/controller")
 	{
 		// ServiceModule
 		controller.GET("/sm/level", h.GetLogLevel)
@@ -23,7 +23,7 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.POST("/sm", h.CreateServiceModule)
 		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
 		// Receiver
-		controller.GET("/receiver", h.ListPortAllSm)
+		controller.GET("/receiver", h.ListAllReceiver)
 		controller.GET("/receiver/:id_sm", h.ListPorts)
 		controller.POST("/receiver", h.AddPort)
 		controller.PATCH("/receiver/:id_sm/:id_rec", h.ChangeActive) // ClosePort, OpenPort
@@ -31,13 +31,20 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.GET("/receiver/client/:id_sm", h.GetConnectedClients)
 		controller.POST("/receiver/client/:id_sm", h.DisconnectClient)
 		// Retranslator
-		// controller.GET("/retranslator", GetRtl)
+		controller.GET("/retranslator", h.ListAllRetranslator)
 		controller.GET("/retranslator/:id_sm", h.ListClient)
 		controller.POST("/retranslator", h.AddClient)
 		controller.PUT("/retranslator", h.UpdateClient)
 		controller.PATCH("/retranslator/:id_sm/:id_ret", h.ChangeActiveClient) //UpClient DownClient
 		controller.DELETE("/retranslator/:id_sm/:id_ret", h.DeleteClient)
 		controller.GET("/retranslator/devices/:id_sm", h.ListDevices)
+		//writer
+		// router.GET("/writer", GetWriters)
+		// router.POST("/writer", AddWriter)
+		// router.GET("/writer/:id_sm", GetWriteBySm)
+		// router.DELETE("/writer/:id_sm/:id_wr", DeleteWriter)
+		// router.PATCH("/writer/:id_sm/:id_wr", ChangeActiveWr)
+
 	}
 }
 

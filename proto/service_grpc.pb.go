@@ -20,6 +20,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	ServiceInfo_IsEmpty_FullMethodName           = "/proto.ServiceInfo/IsEmpty"
 	ServiceInfo_GetInfo_FullMethodName           = "/proto.ServiceInfo/GetInfo"
 	ServiceInfo_GetServiceManager_FullMethodName = "/proto.ServiceInfo/GetServiceManager"
 	ServiceInfo_GetLogLevel_FullMethodName       = "/proto.ServiceInfo/GetLogLevel"
@@ -33,6 +34,7 @@ const (
 //
 // Общий сервис для получения информации о сервисе
 type ServiceInfoClient interface {
+	IsEmpty(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*IsEmptyVar, error)
 	GetInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServiceInfoResponse, error)
 	GetServiceManager(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServiceManager, error)
 	// ----  сервис для управления логированием на любом из сервисов
@@ -50,6 +52,16 @@ type serviceInfoClient struct {
 
 func NewServiceInfoClient(cc grpc.ClientConnInterface) ServiceInfoClient {
 	return &serviceInfoClient{cc}
+}
+
+func (c *serviceInfoClient) IsEmpty(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*IsEmptyVar, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IsEmptyVar)
+	err := c.cc.Invoke(ctx, ServiceInfo_IsEmpty_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *serviceInfoClient) GetInfo(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*ServiceInfoResponse, error) {
@@ -108,6 +120,7 @@ func (c *serviceInfoClient) ReadLogs(ctx context.Context, in *ReadLogsRequest, o
 //
 // Общий сервис для получения информации о сервисе
 type ServiceInfoServer interface {
+	IsEmpty(context.Context, *empty.Empty) (*IsEmptyVar, error)
 	GetInfo(context.Context, *empty.Empty) (*ServiceInfoResponse, error)
 	GetServiceManager(context.Context, *empty.Empty) (*ServiceManager, error)
 	// ----  сервис для управления логированием на любом из сервисов
@@ -127,6 +140,9 @@ type ServiceInfoServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServiceInfoServer struct{}
 
+func (UnimplementedServiceInfoServer) IsEmpty(context.Context, *empty.Empty) (*IsEmptyVar, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsEmpty not implemented")
+}
 func (UnimplementedServiceInfoServer) GetInfo(context.Context, *empty.Empty) (*ServiceInfoResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetInfo not implemented")
 }
@@ -161,6 +177,24 @@ func RegisterServiceInfoServer(s grpc.ServiceRegistrar, srv ServiceInfoServer) {
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&ServiceInfo_ServiceDesc, srv)
+}
+
+func _ServiceInfo_IsEmpty_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceInfoServer).IsEmpty(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ServiceInfo_IsEmpty_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceInfoServer).IsEmpty(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _ServiceInfo_GetInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -260,6 +294,10 @@ var ServiceInfo_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.ServiceInfo",
 	HandlerType: (*ServiceInfoServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IsEmpty",
+			Handler:    _ServiceInfo_IsEmpty_Handler,
+		},
 		{
 			MethodName: "GetInfo",
 			Handler:    _ServiceInfo_GetInfo_Handler,

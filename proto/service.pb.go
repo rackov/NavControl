@@ -131,6 +131,50 @@ func (ServiceManagerType) EnumDescriptor() ([]byte, []int) {
 	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
+type IsEmptyVar struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsEmpty       bool                   `protobuf:"varint,1,opt,name=is_empty,json=isEmpty,proto3" json:"is_empty,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IsEmptyVar) Reset() {
+	*x = IsEmptyVar{}
+	mi := &file_service_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IsEmptyVar) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IsEmptyVar) ProtoMessage() {}
+
+func (x *IsEmptyVar) ProtoReflect() protoreflect.Message {
+	mi := &file_service_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IsEmptyVar.ProtoReflect.Descriptor instead.
+func (*IsEmptyVar) Descriptor() ([]byte, []int) {
+	return file_service_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *IsEmptyVar) GetIsEmpty() bool {
+	if x != nil {
+		return x.IsEmpty
+	}
+	return false
+}
+
 // Ответ с информацией о сервисе
 type ServiceInfoResponse struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
@@ -153,7 +197,7 @@ type ServiceInfoResponse struct {
 
 func (x *ServiceInfoResponse) Reset() {
 	*x = ServiceInfoResponse{}
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_service_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -165,7 +209,7 @@ func (x *ServiceInfoResponse) String() string {
 func (*ServiceInfoResponse) ProtoMessage() {}
 
 func (x *ServiceInfoResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[0]
+	mi := &file_service_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -178,7 +222,7 @@ func (x *ServiceInfoResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceInfoResponse.ProtoReflect.Descriptor instead.
 func (*ServiceInfoResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{0}
+	return file_service_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ServiceInfoResponse) GetName() string {
@@ -292,7 +336,7 @@ type ServiceManager struct {
 
 func (x *ServiceManager) Reset() {
 	*x = ServiceManager{}
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_service_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -304,7 +348,7 @@ func (x *ServiceManager) String() string {
 func (*ServiceManager) ProtoMessage() {}
 
 func (x *ServiceManager) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[1]
+	mi := &file_service_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -317,7 +361,7 @@ func (x *ServiceManager) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServiceManager.ProtoReflect.Descriptor instead.
 func (*ServiceManager) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{1}
+	return file_service_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ServiceManager) GetIpSm() string {
@@ -416,7 +460,7 @@ type LogLevelResponse struct {
 
 func (x *LogLevelResponse) Reset() {
 	*x = LogLevelResponse{}
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_service_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -428,7 +472,7 @@ func (x *LogLevelResponse) String() string {
 func (*LogLevelResponse) ProtoMessage() {}
 
 func (x *LogLevelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[2]
+	mi := &file_service_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -441,7 +485,7 @@ func (x *LogLevelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogLevelResponse.ProtoReflect.Descriptor instead.
 func (*LogLevelResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{2}
+	return file_service_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LogLevelResponse) GetLevel() string {
@@ -475,7 +519,7 @@ type SetLogLevelRequest struct {
 
 func (x *SetLogLevelRequest) Reset() {
 	*x = SetLogLevelRequest{}
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -487,7 +531,7 @@ func (x *SetLogLevelRequest) String() string {
 func (*SetLogLevelRequest) ProtoMessage() {}
 
 func (x *SetLogLevelRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[3]
+	mi := &file_service_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -500,7 +544,7 @@ func (x *SetLogLevelRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetLogLevelRequest.ProtoReflect.Descriptor instead.
 func (*SetLogLevelRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{3}
+	return file_service_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SetLogLevelRequest) GetLevel() string {
@@ -519,7 +563,7 @@ type SetLogLevelResponse struct {
 
 func (x *SetLogLevelResponse) Reset() {
 	*x = SetLogLevelResponse{}
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -531,7 +575,7 @@ func (x *SetLogLevelResponse) String() string {
 func (*SetLogLevelResponse) ProtoMessage() {}
 
 func (x *SetLogLevelResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[4]
+	mi := &file_service_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -544,7 +588,7 @@ func (x *SetLogLevelResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetLogLevelResponse.ProtoReflect.Descriptor instead.
 func (*SetLogLevelResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{4}
+	return file_service_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SetLogLevelResponse) GetSuccess() bool {
@@ -575,7 +619,7 @@ type ReadLogsRequest struct {
 
 func (x *ReadLogsRequest) Reset() {
 	*x = ReadLogsRequest{}
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +631,7 @@ func (x *ReadLogsRequest) String() string {
 func (*ReadLogsRequest) ProtoMessage() {}
 
 func (x *ReadLogsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[5]
+	mi := &file_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +644,7 @@ func (x *ReadLogsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadLogsRequest.ProtoReflect.Descriptor instead.
 func (*ReadLogsRequest) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{5}
+	return file_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ReadLogsRequest) GetLevel() string {
@@ -644,7 +688,7 @@ type ReadLogsResponse struct {
 
 func (x *ReadLogsResponse) Reset() {
 	*x = ReadLogsResponse{}
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -656,7 +700,7 @@ func (x *ReadLogsResponse) String() string {
 func (*ReadLogsResponse) ProtoMessage() {}
 
 func (x *ReadLogsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_service_proto_msgTypes[6]
+	mi := &file_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -669,7 +713,7 @@ func (x *ReadLogsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReadLogsResponse.ProtoReflect.Descriptor instead.
 func (*ReadLogsResponse) Descriptor() ([]byte, []int) {
-	return file_service_proto_rawDescGZIP(), []int{6}
+	return file_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ReadLogsResponse) GetSuccess() bool {
@@ -697,7 +741,10 @@ var File_service_proto protoreflect.FileDescriptor
 
 const file_service_proto_rawDesc = "" +
 	"\n" +
-	"\rservice.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\x89\x03\n" +
+	"\rservice.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"'\n" +
+	"\n" +
+	"IsEmptyVar\x12\x19\n" +
+	"\bis_empty\x18\x01 \x01(\bR\aisEmpty\"\x89\x03\n" +
 	"\x13ServiceInfoResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x14\n" +
@@ -761,8 +808,9 @@ const file_service_proto_rawDesc = "" +
 	"\bRECEIVER\x10\x00\x12\n" +
 	"\n" +
 	"\x06WRITER\x10\x01\x12\x10\n" +
-	"\fRETRANSLATOR\x10\x022\xd3\x02\n" +
-	"\vServiceInfo\x12=\n" +
+	"\fRETRANSLATOR\x10\x022\x89\x03\n" +
+	"\vServiceInfo\x124\n" +
+	"\aIsEmpty\x12\x16.google.protobuf.Empty\x1a\x11.proto.IsEmptyVar\x12=\n" +
 	"\aGetInfo\x12\x16.google.protobuf.Empty\x1a\x1a.proto.ServiceInfoResponse\x12B\n" +
 	"\x11GetServiceManager\x12\x16.google.protobuf.Empty\x1a\x15.proto.ServiceManager\x12>\n" +
 	"\vGetLogLevel\x12\x16.google.protobuf.Empty\x1a\x17.proto.LogLevelResponse\x12D\n" +
@@ -782,35 +830,38 @@ func file_service_proto_rawDescGZIP() []byte {
 }
 
 var file_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_service_proto_goTypes = []any{
 	(LogLevel)(0),               // 0: proto.LogLevel
 	(ServiceManagerType)(0),     // 1: proto.ServiceManagerType
-	(*ServiceInfoResponse)(nil), // 2: proto.ServiceInfoResponse
-	(*ServiceManager)(nil),      // 3: proto.ServiceManager
-	(*LogLevelResponse)(nil),    // 4: proto.LogLevelResponse
-	(*SetLogLevelRequest)(nil),  // 5: proto.SetLogLevelRequest
-	(*SetLogLevelResponse)(nil), // 6: proto.SetLogLevelResponse
-	(*ReadLogsRequest)(nil),     // 7: proto.ReadLogsRequest
-	(*ReadLogsResponse)(nil),    // 8: proto.ReadLogsResponse
-	(*empty.Empty)(nil),         // 9: google.protobuf.Empty
+	(*IsEmptyVar)(nil),          // 2: proto.IsEmptyVar
+	(*ServiceInfoResponse)(nil), // 3: proto.ServiceInfoResponse
+	(*ServiceManager)(nil),      // 4: proto.ServiceManager
+	(*LogLevelResponse)(nil),    // 5: proto.LogLevelResponse
+	(*SetLogLevelRequest)(nil),  // 6: proto.SetLogLevelRequest
+	(*SetLogLevelResponse)(nil), // 7: proto.SetLogLevelResponse
+	(*ReadLogsRequest)(nil),     // 8: proto.ReadLogsRequest
+	(*ReadLogsResponse)(nil),    // 9: proto.ReadLogsResponse
+	(*empty.Empty)(nil),         // 10: google.protobuf.Empty
 }
 var file_service_proto_depIdxs = []int32{
-	9, // 0: proto.ServiceInfo.GetInfo:input_type -> google.protobuf.Empty
-	9, // 1: proto.ServiceInfo.GetServiceManager:input_type -> google.protobuf.Empty
-	9, // 2: proto.ServiceInfo.GetLogLevel:input_type -> google.protobuf.Empty
-	5, // 3: proto.ServiceInfo.SetLogLevel:input_type -> proto.SetLogLevelRequest
-	7, // 4: proto.ServiceInfo.ReadLogs:input_type -> proto.ReadLogsRequest
-	2, // 5: proto.ServiceInfo.GetInfo:output_type -> proto.ServiceInfoResponse
-	3, // 6: proto.ServiceInfo.GetServiceManager:output_type -> proto.ServiceManager
-	4, // 7: proto.ServiceInfo.GetLogLevel:output_type -> proto.LogLevelResponse
-	6, // 8: proto.ServiceInfo.SetLogLevel:output_type -> proto.SetLogLevelResponse
-	8, // 9: proto.ServiceInfo.ReadLogs:output_type -> proto.ReadLogsResponse
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	10, // 0: proto.ServiceInfo.IsEmpty:input_type -> google.protobuf.Empty
+	10, // 1: proto.ServiceInfo.GetInfo:input_type -> google.protobuf.Empty
+	10, // 2: proto.ServiceInfo.GetServiceManager:input_type -> google.protobuf.Empty
+	10, // 3: proto.ServiceInfo.GetLogLevel:input_type -> google.protobuf.Empty
+	6,  // 4: proto.ServiceInfo.SetLogLevel:input_type -> proto.SetLogLevelRequest
+	8,  // 5: proto.ServiceInfo.ReadLogs:input_type -> proto.ReadLogsRequest
+	2,  // 6: proto.ServiceInfo.IsEmpty:output_type -> proto.IsEmptyVar
+	3,  // 7: proto.ServiceInfo.GetInfo:output_type -> proto.ServiceInfoResponse
+	4,  // 8: proto.ServiceInfo.GetServiceManager:output_type -> proto.ServiceManager
+	5,  // 9: proto.ServiceInfo.GetLogLevel:output_type -> proto.LogLevelResponse
+	7,  // 10: proto.ServiceInfo.SetLogLevel:output_type -> proto.SetLogLevelResponse
+	9,  // 11: proto.ServiceInfo.ReadLogs:output_type -> proto.ReadLogsResponse
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_service_proto_init() }
@@ -824,7 +875,7 @@ func file_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_service_proto_rawDesc), len(file_service_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
