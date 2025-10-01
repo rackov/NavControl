@@ -24,14 +24,11 @@ message WriteService {
     int32 port_db=4;
     string db_name=5;
     string db_table=6;
-    string ip_nats=7; 
-    int32 port_nats=8;
-    string key_nats=9;
-    string login=10;
-    string passw=11;   
-    string status=12;
-    string name=13; 
-    bool is_active=14;
+    string login=7;
+    string passw=8;   
+    string status=9;
+    string name=10; 
+    bool is_active=11;
 }
 message RetWrite{
     repeated WriteService list_write=1;

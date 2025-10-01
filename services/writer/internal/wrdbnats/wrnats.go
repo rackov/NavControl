@@ -89,7 +89,7 @@ func (s *WrNatsServer) init() (err error) {
 	return s.stcon.Error
 }
 
-func New(wr *config.ControlWriter, log *logger.Logger) (wrN WrNatsServer, err error) {
+func New(wr *config.Writer, NatsAddress string, NatsTopic string, log *logger.Logger) (wrN WrNatsServer, err error) {
 
 	tempfile := fmt.Sprintf("temp_data_%d.json", wr.IdWriter)
 	constr := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -101,8 +101,8 @@ func New(wr *config.ControlWriter, log *logger.Logger) (wrN WrNatsServer, err er
 		tempFileName: tempfile,
 		stcon:        StatusConn{Id: StNotCon, Error: nil},
 		con_str:      constr,
-		nsAdrr:       wr.NatsAddress,
-		natsKey:      wr.NatsTopic,
+		nsAdrr:       NatsAddress,
+		natsKey:      NatsTopic,
 		Active:       true,
 		ttN:          5 * time.Second,
 		log:          log,

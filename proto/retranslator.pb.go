@@ -238,7 +238,7 @@ type Client struct {
 	DeviceList     []int32                `protobuf:"varint,8,rep,packed,name=device_list,json=deviceList,proto3" json:"device_list,omitempty"`
 	Name           string                 `protobuf:"bytes,9,opt,name=name,proto3" json:"name,omitempty"`
 	Status         string                 `protobuf:"bytes,10,opt,name=status,proto3" json:"status,omitempty"`
-	IsActive       bool                   `protobuf:"varint,11,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	Active         bool                   `protobuf:"varint,11,opt,name=active,proto3" json:"active,omitempty"`
 	Description    string                 `protobuf:"bytes,12,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -344,9 +344,9 @@ func (x *Client) GetStatus() string {
 	return ""
 }
 
-func (x *Client) GetIsActive() bool {
+func (x *Client) GetActive() bool {
 	if x != nil {
-		return x.IsActive
+		return x.Active
 	}
 	return false
 }
@@ -418,7 +418,7 @@ const file_retranslator_proto_rawDesc = "" +
 	"listDevice\"I\n" +
 	"\tSetClient\x12'\n" +
 	"\x0fid_retranslator\x18\x01 \x01(\x05R\x0eidRetranslator\x12\x13\n" +
-	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\"\xe5\x02\n" +
+	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\"\xe0\x02\n" +
 	"\x06Client\x12'\n" +
 	"\x0fid_retranslator\x18\x01 \x01(\x05R\x0eidRetranslator\x12\x13\n" +
 	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\x12\x1b\n" +
@@ -433,8 +433,8 @@ const file_retranslator_proto_rawDesc = "" +
 	"deviceList\x12\x12\n" +
 	"\x04name\x18\t \x01(\tR\x04name\x12\x16\n" +
 	"\x06status\x18\n" +
-	" \x01(\tR\x06status\x12\x1b\n" +
-	"\tis_active\x18\v \x01(\bR\bisActive\x12 \n" +
+	" \x01(\tR\x06status\x12\x16\n" +
+	"\x06active\x18\v \x01(\bR\x06active\x12 \n" +
 	"\vdescription\x18\f \x01(\tR\vdescription\"2\n" +
 	"\aClients\x12'\n" +
 	"\aclients\x18\x01 \x03(\v2\r.proto.ClientR\aclients2\x94\x03\n" +

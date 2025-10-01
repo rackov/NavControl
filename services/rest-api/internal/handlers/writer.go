@@ -8,11 +8,37 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/models"
+	"github.com/rackov/NavControl/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	pb "github.com/rackov/NavControl/proto"
 )
 
+func (h *Handler) ListAllWriter(c *gin.Context) {
+	responseNew := []*proto.WriteService{}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, client := range h.services {
+		manager, err := client.GetServiceManager(c.Request.Context())
+		if err != nil {
+			continue
+		}
+		if manager.TypeSm != "WRITER" {
+			continue
+		}
+		response, err := client.WriterClient().ListWrites(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			continue
+
+		}
+		for _, r := range response.ListWrite {
+			r.IdSm = int32(manager.IdSm)
+			responseNew = append(responseNew, r)
+		}
+	}
+	c.JSON(http.StatusOK, responseNew)
+}
 func (h *Handler) ListWriters(c *gin.Context) {
 	errUse := models.UsesMsgError{}
 

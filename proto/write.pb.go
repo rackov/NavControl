@@ -34,14 +34,11 @@ type WriteService struct {
 	PortDb        int32                  `protobuf:"varint,4,opt,name=port_db,json=portDb,proto3" json:"port_db,omitempty"`
 	DbName        string                 `protobuf:"bytes,5,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"`
 	DbTable       string                 `protobuf:"bytes,6,opt,name=db_table,json=dbTable,proto3" json:"db_table,omitempty"`
-	IpNats        string                 `protobuf:"bytes,7,opt,name=ip_nats,json=ipNats,proto3" json:"ip_nats,omitempty"`
-	PortNats      int32                  `protobuf:"varint,8,opt,name=port_nats,json=portNats,proto3" json:"port_nats,omitempty"`
-	KeyNats       string                 `protobuf:"bytes,9,opt,name=key_nats,json=keyNats,proto3" json:"key_nats,omitempty"`
-	Login         string                 `protobuf:"bytes,10,opt,name=login,proto3" json:"login,omitempty"`
-	Passw         string                 `protobuf:"bytes,11,opt,name=passw,proto3" json:"passw,omitempty"`
-	Status        string                 `protobuf:"bytes,12,opt,name=status,proto3" json:"status,omitempty"`
-	Name          string                 `protobuf:"bytes,13,opt,name=name,proto3" json:"name,omitempty"`
-	IsActive      bool                   `protobuf:"varint,14,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	Login         string                 `protobuf:"bytes,7,opt,name=login,proto3" json:"login,omitempty"`
+	Passw         string                 `protobuf:"bytes,8,opt,name=passw,proto3" json:"passw,omitempty"`
+	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
+	Name          string                 `protobuf:"bytes,10,opt,name=name,proto3" json:"name,omitempty"`
+	IsActive      bool                   `protobuf:"varint,11,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -114,27 +111,6 @@ func (x *WriteService) GetDbName() string {
 func (x *WriteService) GetDbTable() string {
 	if x != nil {
 		return x.DbTable
-	}
-	return ""
-}
-
-func (x *WriteService) GetIpNats() string {
-	if x != nil {
-		return x.IpNats
-	}
-	return ""
-}
-
-func (x *WriteService) GetPortNats() int32 {
-	if x != nil {
-		return x.PortNats
-	}
-	return 0
-}
-
-func (x *WriteService) GetKeyNats() string {
-	if x != nil {
-		return x.KeyNats
 	}
 	return ""
 }
@@ -318,23 +294,20 @@ var File_write_proto protoreflect.FileDescriptor
 
 const file_write_proto_rawDesc = "" +
 	"\n" +
-	"\vwrite.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\xe8\x02\n" +
+	"\vwrite.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\x97\x02\n" +
 	"\fWriteService\x12\x1b\n" +
 	"\tid_writer\x18\x01 \x01(\x05R\bidWriter\x12\x13\n" +
 	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\x12\x13\n" +
 	"\x05ip_db\x18\x03 \x01(\tR\x04ipDb\x12\x17\n" +
 	"\aport_db\x18\x04 \x01(\x05R\x06portDb\x12\x17\n" +
 	"\adb_name\x18\x05 \x01(\tR\x06dbName\x12\x19\n" +
-	"\bdb_table\x18\x06 \x01(\tR\adbTable\x12\x17\n" +
-	"\aip_nats\x18\a \x01(\tR\x06ipNats\x12\x1b\n" +
-	"\tport_nats\x18\b \x01(\x05R\bportNats\x12\x19\n" +
-	"\bkey_nats\x18\t \x01(\tR\akeyNats\x12\x14\n" +
-	"\x05login\x18\n" +
-	" \x01(\tR\x05login\x12\x14\n" +
-	"\x05passw\x18\v \x01(\tR\x05passw\x12\x16\n" +
-	"\x06status\x18\f \x01(\tR\x06status\x12\x12\n" +
-	"\x04name\x18\r \x01(\tR\x04name\x12\x1b\n" +
-	"\tis_active\x18\x0e \x01(\bR\bisActive\">\n" +
+	"\bdb_table\x18\x06 \x01(\tR\adbTable\x12\x14\n" +
+	"\x05login\x18\a \x01(\tR\x05login\x12\x14\n" +
+	"\x05passw\x18\b \x01(\tR\x05passw\x12\x16\n" +
+	"\x06status\x18\t \x01(\tR\x06status\x12\x12\n" +
+	"\x04name\x18\n" +
+	" \x01(\tR\x04name\x12\x1b\n" +
+	"\tis_active\x18\v \x01(\bR\bisActive\">\n" +
 	"\bRetWrite\x122\n" +
 	"\n" +
 	"list_write\x18\x01 \x03(\v2\x13.proto.WriteServiceR\tlistWrite\"%\n" +

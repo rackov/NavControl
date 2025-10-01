@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -261,7 +262,7 @@ func (h *Handler) ChangeActiveClient(c *gin.Context) {
 	// Определяем, какой метод вызывать, в зависимости от HTTP метода
 	clientinfo, err := serviceClient.RetranslatorClient().GetInfoClient(context.Background(), setClient)
 
-	if !clientinfo.IsActive {
+	if !clientinfo.Active {
 		updatedClient, err = serviceClient.RetranslatorClient().UpClient(context.Background(), setClient)
 	} else {
 		updatedClient, err = serviceClient.RetranslatorClient().DownClient(context.Background(), setClient)
@@ -331,6 +332,15 @@ func (h *Handler) DeleteClient(c *gin.Context) {
 		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
+	clientinfo, err := serviceClient.RetranslatorClient().GetInfoClient(context.Background(), setClient)
+	if err != nil {
+		h.logger.Errorf("Не возможно подключится к сервису: %v", err)
+		errUse.ErrorMsg = fmt.Sprintf("Не возможно подключися к сервису: %v", err)
+		errUse.ErrorTitle = "Не возможно подключится к сервису"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
 
 	_, err = serviceClient.RetranslatorClient().DeleteClient(context.Background(), setClient)
 	if err != nil {
@@ -341,7 +351,7 @@ func (h *Handler) DeleteClient(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "client deleted successfully"})
+	c.JSON(http.StatusOK, clientinfo)
 }
 
 // ListDevices получает список устройств ретранслятора
@@ -397,5 +407,5 @@ func (h *Handler) ListDevices(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, devices)
+	c.JSON(http.StatusOK, devices.ListDevice)
 }

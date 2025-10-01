@@ -310,7 +310,7 @@ func (s *SendServer) UpdateClient(upcl *proto.Client) (*proto.Client, error) {
 			cl.Param.Port = int(upcl.PortClient)
 			cl.Param.Protocol = upcl.Protocol
 			cl.Field = upcl.Sensors
-			upcl.IsActive = cl.Active
+			upcl.Active = cl.Active
 			err = s.update(upcl)
 			return upcl, err
 		}
@@ -391,7 +391,7 @@ func (s *SendServer) AddClient(insCl *proto.Client) (newCl *proto.Client, err er
 
 	client := SendConnect{
 		Param:  SendParam{Ip: insCl.IpClient, Port: int(insCl.PortClient), Protocol: insCl.Protocol},
-		Active: insCl.IsActive,
+		Active: insCl.Active,
 	}
 	client.Field = make([]string, 0)
 	for _, s := range insCl.Sensors {

@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/writer/internal/wrdbnats"
@@ -119,26 +120,36 @@ func (s *GRPCServer) IsEmpty(ctx context.Context, _ *emptypb.Empty) (*proto.IsEm
 
 // Writer
 
-// func (s *GRPCServer) AddWrite(ctx context.Context, sw *proto.WriteService) (*proto.StateServ, error) {
-// 	// s.mu.Lock()
-// 	// defer s.mu.Unlock()
-// 	f := -1
-// 	for i, c := range s.wrman.ListService() {
-// 		if (c.IdSm == sw.GetIdSm()) && (c.IdWriter == sw.GetIdWriter()) {
-// 			f = i
-// 			break
-// 		}
-// 	}
-// 	if f != -1 {
-// 		return &tgrpc.StateServ{Message: fmt.Sprintf("Repiat Idsm:%d  IdWrite:%d ", sw.GetIdSm(), sw.GetIdWriter())},
-// 			fmt.Errorf("Repiat Idsm:%d  IdWrite:%d ", sw.GetIdSm(), sw.GetIdWriter())
-// 	}
-// 	err := s.wrman.AddService(sw)
-// 	if err == nil {
+func (s *GRPCServer) AddWrite(ctx context.Context, sw *proto.WriteService) (*proto.StateServ, error) {
+	// s.mu.Lock()
+	// defer s.mu.Unlock()
 
-// 		s.ServList = append(s.ServList, sw)
-// 		s.save(Fname)
-// 	}
+	return &proto.StateServ{Message: "ok"}, nil
+}
+func (s *GRPCServer) DeleteWrite(ctx context.Context, sw *proto.WriteService) (*proto.StateServ, error) {
 
-// 	return &tgrpc.StateServ{Message: fmt.Sprintf("mes: %v", err)}, err
-// }
+	return &proto.StateServ{Message: "ok"}, nil
+}
+func (s *GRPCServer) DownService(ctx context.Context, sw *proto.SetWrite) (*proto.StateServ, error) {
+
+	return &proto.StateServ{Message: "ok"}, nil
+}
+func (s *GRPCServer) UpService(ctx context.Context, sw *proto.SetWrite) (*proto.StateServ, error) {
+
+	return &proto.StateServ{Message: "ok"}, nil
+}
+func (s *GRPCServer) ListWrites(context.Context, *empty.Empty) (*proto.RetWrite, error) {
+	wrList := []*proto.WriteService{}
+	conf := s.wrman.GetConfig()
+	wrList = append(wrList, &proto.WriteService{
+		IdWriter: 1,
+		IdSm:     1,
+		IpDb:     conf.DbIp,
+		PortDb:   conf.DbPort,
+	},
+	)
+	return &proto.RetWrite{
+		ListWrite: wrList,
+	}, nil
+
+}
