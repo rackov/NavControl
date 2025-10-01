@@ -39,11 +39,10 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.DELETE("/retranslator/:id_sm/:id_ret", h.DeleteClient)
 		controller.GET("/retranslator/devices/:id_sm", h.ListDevices)
 		//writer
-		// router.GET("/writer", GetWriters)
-		// router.POST("/writer", AddWriter)
-		// router.GET("/writer/:id_sm", GetWriteBySm)
-		// router.DELETE("/writer/:id_sm/:id_wr", DeleteWriter)
-		// router.PATCH("/writer/:id_sm/:id_wr", ChangeActiveWr)
+		router.GET("/writer/:id_sm", h.ListWriters)
+		router.POST("/writer", h.AddWriter)
+		router.DELETE("/writer/:id_sm/:id_wr", h.DeleteWriter)
+		router.PATCH("/writer/:id_sm/:id_wr", h.ChangeActiveWr) //DownWrite UpWrite
 
 	}
 }

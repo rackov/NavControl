@@ -20,6 +20,7 @@ type GRPCServer struct {
 	wrman  *wrdbnats.HubServer
 
 	proto.UnimplementedServiceInfoServer
+	proto.UnimplementedWriteControlServer
 }
 
 func NewGRPCServer(wrman *wrdbnats.HubServer) *GRPCServer {
@@ -52,6 +53,7 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 
 	// Регистрируем сервисы
 	proto.RegisterServiceInfoServer(grpcServer, s)
+	proto.RegisterWriteControlServer(grpcServer, s)
 
 	// Включаем reflection API для отладки
 	reflection.Register(grpcServer)
@@ -114,3 +116,29 @@ func (s *GRPCServer) IsEmpty(ctx context.Context, _ *emptypb.Empty) (*proto.IsEm
 	}, nil
 
 }
+
+// Writer
+
+// func (s *GRPCServer) AddWrite(ctx context.Context, sw *proto.WriteService) (*proto.StateServ, error) {
+// 	// s.mu.Lock()
+// 	// defer s.mu.Unlock()
+// 	f := -1
+// 	for i, c := range s.wrman.ListService() {
+// 		if (c.IdSm == sw.GetIdSm()) && (c.IdWriter == sw.GetIdWriter()) {
+// 			f = i
+// 			break
+// 		}
+// 	}
+// 	if f != -1 {
+// 		return &tgrpc.StateServ{Message: fmt.Sprintf("Repiat Idsm:%d  IdWrite:%d ", sw.GetIdSm(), sw.GetIdWriter())},
+// 			fmt.Errorf("Repiat Idsm:%d  IdWrite:%d ", sw.GetIdSm(), sw.GetIdWriter())
+// 	}
+// 	err := s.wrman.AddService(sw)
+// 	if err == nil {
+
+// 		s.ServList = append(s.ServList, sw)
+// 		s.save(Fname)
+// 	}
+
+// 	return &tgrpc.StateServ{Message: fmt.Sprintf("mes: %v", err)}, err
+// }

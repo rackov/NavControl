@@ -24,14 +24,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	WriteControl_ListWrite_FullMethodName = "/proto.WriteControl/ListWrite"
+	WriteControl_ListWrites_FullMethodName  = "/proto.WriteControl/ListWrites"
+	WriteControl_AddWrite_FullMethodName    = "/proto.WriteControl/AddWrite"
+	WriteControl_DeleteWrite_FullMethodName = "/proto.WriteControl/DeleteWrite"
+	WriteControl_DownWrite_FullMethodName   = "/proto.WriteControl/DownWrite"
+	WriteControl_UpWrite_FullMethodName     = "/proto.WriteControl/UpWrite"
 )
 
 // WriteControlClient is the client API for WriteControl service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WriteControlClient interface {
-	ListWrite(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*RetWrite, error)
+	ListWrites(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*RetWrite, error)
+	AddWrite(ctx context.Context, in *WriteService, opts ...grpc.CallOption) (*StateServ, error)
+	DeleteWrite(ctx context.Context, in *WriteService, opts ...grpc.CallOption) (*StateServ, error)
+	DownWrite(ctx context.Context, in *SetWrite, opts ...grpc.CallOption) (*StateServ, error)
+	UpWrite(ctx context.Context, in *SetWrite, opts ...grpc.CallOption) (*StateServ, error)
 }
 
 type writeControlClient struct {
@@ -42,10 +50,50 @@ func NewWriteControlClient(cc grpc.ClientConnInterface) WriteControlClient {
 	return &writeControlClient{cc}
 }
 
-func (c *writeControlClient) ListWrite(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*RetWrite, error) {
+func (c *writeControlClient) ListWrites(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*RetWrite, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(RetWrite)
-	err := c.cc.Invoke(ctx, WriteControl_ListWrite_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, WriteControl_ListWrites_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writeControlClient) AddWrite(ctx context.Context, in *WriteService, opts ...grpc.CallOption) (*StateServ, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StateServ)
+	err := c.cc.Invoke(ctx, WriteControl_AddWrite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writeControlClient) DeleteWrite(ctx context.Context, in *WriteService, opts ...grpc.CallOption) (*StateServ, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StateServ)
+	err := c.cc.Invoke(ctx, WriteControl_DeleteWrite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writeControlClient) DownWrite(ctx context.Context, in *SetWrite, opts ...grpc.CallOption) (*StateServ, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StateServ)
+	err := c.cc.Invoke(ctx, WriteControl_DownWrite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *writeControlClient) UpWrite(ctx context.Context, in *SetWrite, opts ...grpc.CallOption) (*StateServ, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StateServ)
+	err := c.cc.Invoke(ctx, WriteControl_UpWrite_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +104,11 @@ func (c *writeControlClient) ListWrite(ctx context.Context, in *empty.Empty, opt
 // All implementations must embed UnimplementedWriteControlServer
 // for forward compatibility.
 type WriteControlServer interface {
-	ListWrite(context.Context, *empty.Empty) (*RetWrite, error)
+	ListWrites(context.Context, *empty.Empty) (*RetWrite, error)
+	AddWrite(context.Context, *WriteService) (*StateServ, error)
+	DeleteWrite(context.Context, *WriteService) (*StateServ, error)
+	DownWrite(context.Context, *SetWrite) (*StateServ, error)
+	UpWrite(context.Context, *SetWrite) (*StateServ, error)
 	mustEmbedUnimplementedWriteControlServer()
 }
 
@@ -67,8 +119,20 @@ type WriteControlServer interface {
 // pointer dereference when methods are called.
 type UnimplementedWriteControlServer struct{}
 
-func (UnimplementedWriteControlServer) ListWrite(context.Context, *empty.Empty) (*RetWrite, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListWrite not implemented")
+func (UnimplementedWriteControlServer) ListWrites(context.Context, *empty.Empty) (*RetWrite, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListWrites not implemented")
+}
+func (UnimplementedWriteControlServer) AddWrite(context.Context, *WriteService) (*StateServ, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddWrite not implemented")
+}
+func (UnimplementedWriteControlServer) DeleteWrite(context.Context, *WriteService) (*StateServ, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteWrite not implemented")
+}
+func (UnimplementedWriteControlServer) DownWrite(context.Context, *SetWrite) (*StateServ, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DownWrite not implemented")
+}
+func (UnimplementedWriteControlServer) UpWrite(context.Context, *SetWrite) (*StateServ, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpWrite not implemented")
 }
 func (UnimplementedWriteControlServer) mustEmbedUnimplementedWriteControlServer() {}
 func (UnimplementedWriteControlServer) testEmbeddedByValue()                      {}
@@ -91,20 +155,92 @@ func RegisterWriteControlServer(s grpc.ServiceRegistrar, srv WriteControlServer)
 	s.RegisterService(&WriteControl_ServiceDesc, srv)
 }
 
-func _WriteControl_ListWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _WriteControl_ListWrites_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(WriteControlServer).ListWrite(ctx, in)
+		return srv.(WriteControlServer).ListWrites(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: WriteControl_ListWrite_FullMethodName,
+		FullMethod: WriteControl_ListWrites_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WriteControlServer).ListWrite(ctx, req.(*empty.Empty))
+		return srv.(WriteControlServer).ListWrites(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriteControl_AddWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteService)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriteControlServer).AddWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriteControl_AddWrite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriteControlServer).AddWrite(ctx, req.(*WriteService))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriteControl_DeleteWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteService)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriteControlServer).DeleteWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriteControl_DeleteWrite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriteControlServer).DeleteWrite(ctx, req.(*WriteService))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriteControl_DownWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWrite)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriteControlServer).DownWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriteControl_DownWrite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriteControlServer).DownWrite(ctx, req.(*SetWrite))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _WriteControl_UpWrite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWrite)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WriteControlServer).UpWrite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: WriteControl_UpWrite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WriteControlServer).UpWrite(ctx, req.(*SetWrite))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -117,8 +253,24 @@ var WriteControl_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*WriteControlServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ListWrite",
-			Handler:    _WriteControl_ListWrite_Handler,
+			MethodName: "ListWrites",
+			Handler:    _WriteControl_ListWrites_Handler,
+		},
+		{
+			MethodName: "AddWrite",
+			Handler:    _WriteControl_AddWrite_Handler,
+		},
+		{
+			MethodName: "DeleteWrite",
+			Handler:    _WriteControl_DeleteWrite_Handler,
+		},
+		{
+			MethodName: "DownWrite",
+			Handler:    _WriteControl_DownWrite_Handler,
+		},
+		{
+			MethodName: "UpWrite",
+			Handler:    _WriteControl_UpWrite_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

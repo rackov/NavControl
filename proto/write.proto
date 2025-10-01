@@ -10,13 +10,37 @@ option go_package = "NavControl/proto";
 import "google/protobuf/empty.proto";
 
 service WriteControl {
-  rpc ListWrite(google.protobuf.Empty) returns (RetWrite);
+    rpc ListWrites(google.protobuf.Empty) returns (RetWrite);
+    rpc AddWrite(WriteService) returns(StateServ);
+    rpc DeleteWrite(WriteService) returns(StateServ);
+    rpc DownWrite(SetWrite) returns(StateServ);
+    rpc UpWrite(SetWrite) returns(StateServ);
 }    
 
-message RetWrite {
-  repeated WriteService list_write = 1;
-}
-
 message WriteService {
-    int32 id_writer=1; 
+    int32 id_writer=1;
+    int32 id_sm=2; 
+    string ip_db=3;
+    int32 port_db=4;
+    string db_name=5;
+    string db_table=6;
+    string ip_nats=7; 
+    int32 port_nats=8;
+    string key_nats=9;
+    string login=10;
+    string passw=11;   
+    string status=12;
+    string name=13; 
+    bool is_active=14;
+}
+message RetWrite{
+    repeated WriteService list_write=1;
+}
+message StateServ{
+    string message=1;
+}
+message SetWrite {
+    int32 id_writer=1;
+    int32 id_sm=2; 
+
 }

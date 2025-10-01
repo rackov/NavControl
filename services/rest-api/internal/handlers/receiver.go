@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
+	"github.com/rackov/NavControl/services/rest-api/internal/restgrpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -50,36 +52,53 @@ func (h *Handler) ListAllReceiver(c *gin.Context) {
 
 // ListPorts получает список портов для указанного сервиса
 func (h *Handler) ListPorts(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+
 	idStr := c.Param("id_sm")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Неверный ID сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	client, exists := h.services[id]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка доступа к методу сервиса"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Ошибка типа сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Вызываем gRPC метод для получения списка портов
 	response, err := client.ReceiverClient().ListPorts(context.Background(), &emptypb.Empty{})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка получения списка портов"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 	responseNew := []models.ReceiverModule{}
@@ -108,29 +127,43 @@ func (h *Handler) GetPortStatus(c *gin.Context) {
 
 // GetConnectedClients получает список подключенных клиентов
 func (h *Handler) GetConnectedClients(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+
 	idStr := c.Param("id_sm")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Неверный ID сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	client, exists := h.services[id]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка доступа к методу сервиса"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Ошибка типа сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
@@ -142,7 +175,10 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 	if portReceiverStr != "" {
 		port, err := strconv.ParseInt(portReceiverStr, 10, 32)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid port_receiver parameter"})
+			errUse.ErrorMsg = err.Error()
+			errUse.ErrorTitle = "Неверный параметр port_receiver"
+			errUse.HttpCode = http.StatusBadRequest
+			c.JSON(errUse.HttpCode, errUse)
 			return
 		}
 		portReceiver = int32(port)
@@ -157,7 +193,10 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 	// Вызываем gRPC метод для получения списка клиентов
 	response, err := client.ReceiverClient().GetConnectedClients(context.Background(), request)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка получения списка клиентов"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
@@ -166,43 +205,63 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 
 // DisconnectClient отключает клиента
 func (h *Handler) DisconnectClient(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+
 	idStr := c.Param("id_sm")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Неверный ID сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	client, exists := h.services[id]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка доступа к методу сервиса"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Ошибка типа сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Парсим тело запроса
 	var req proto.DisconnectClientRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Вызываем gRPC метод для отключения клиента
 	response, err := client.ReceiverClient().DisconnectClient(context.Background(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка отключения клиента"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
@@ -213,176 +272,261 @@ func (h *Handler) DisconnectClient(c *gin.Context) {
 func (h *Handler) AddPort(c *gin.Context) {
 	// Парсим тело запроса
 	var req proto.PortDefinition
+	errUse := models.UsesMsgError{}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	id := int(req.IdSm)
 	client, exists := h.services[id]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка доступа к методу  сервиса"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Ошибка типа  сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+
 		return
 	}
 
 	// Вызываем gRPC метод для добавления порта
 	response, err := client.ReceiverClient().AddPort(context.Background(), &req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка добавления порта"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response.PortDetails)
 }
 
 // ChangeActive открывает или закрывает порт
 func (h *Handler) ChangeActive(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+
 	idSmStr := c.Param("id_sm")
 	idSm, err := strconv.Atoi(idSmStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка id сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	idRecStr := c.Param("id_rec")
 	idRec, err := strconv.Atoi(idRecStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid port ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка id порта"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	client, exists := h.services[idSm]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Метод сервиса не доступен"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Не является получателем"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
-	// Получаем текущий статус порта для определения операции
-	request := &proto.GetClientsRequest{
-		PortReceiver: int32(idRec),
-	}
-
-	port, err := client.ReceiverClient().GetPortStatus(context.Background(), request)
+	port, err := h.GetPortNumberByID(int32(idRec), client)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка при определении номера порта"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Создаем объект порта с измененным статусом
 	portDefinition := &proto.PortDefinition{
-		IdReceiver:   port.IdReceiver,
-		IdSm:         port.IdSm,
-		Name:         port.Name,
-		PortReceiver: port.PortReceiver,
-		Protocol:     port.Protocol,
-		Description:  port.Description,
+		IdReceiver:       port.IdReceiver,
+		IdSm:             port.IdSm,
+		Name:             port.Name,
+		PortReceiver:     port.PortReceiver,
+		Protocol:         port.Protocol,
+		Description:      port.Description,
+		Active:           !port.Active,
+		Status:           port.Status,
+		ConnectionsCount: int32(port.ConnectionsCount),
 	}
 
 	// Выполняем открытие или закрытие порта в зависимости от текущего статуса
-	var response *proto.PortOperationResponse
+	// var response *proto.PortOperationResponse
 	if port.Active {
 		// Закрываем порт
-		response, err = client.ReceiverClient().ClosePort(context.Background(), portDefinition)
+		// response
+		_, err = client.ReceiverClient().ClosePort(context.Background(), portDefinition)
 	} else {
 		// Открываем порт
-		response, err = client.ReceiverClient().OpenPort(context.Background(), portDefinition)
+		// response
+		_, err = client.ReceiverClient().OpenPort(context.Background(), portDefinition)
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка изменения состояния порта"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
+	responseNew := models.ReceiverModule{
+		IDReceiver:       int(portDefinition.IdReceiver),
+		IDSm:             manager.IdSm,
+		Name:             portDefinition.Name,
+		PortReceiver:     int(portDefinition.PortReceiver),
+		Protocol:         portDefinition.Protocol,
+		Active:           portDefinition.Active,
+		Status:           portDefinition.Status,
+		Description:      portDefinition.Description,
+		ErrorMsg:         "",
+		ConnectionsCount: int(portDefinition.ConnectionsCount),
+	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, responseNew)
+}
+
+// получение номера порта по ID
+func (h *Handler) GetPortNumberByID(id int32, client *restgrpc.Client) (*proto.PortDefinition, error) {
+	var portDefinition *proto.PortDefinition
+
+	// Получаем список портов
+	listResponse, err := client.ReceiverClient().ListPorts(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range listResponse.Ports {
+		if r.IdReceiver == id {
+			portDefinition = r
+			break
+
+		}
+	}
+
+	if portDefinition == nil {
+		return nil, errors.New("Port not found")
+	}
+	return portDefinition, nil
 }
 
 // DeletePort удаляет порт из конфигурации
 func (h *Handler) DeletePort(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+
 	idSmStr := c.Param("id_sm")
 	idSm, err := strconv.Atoi(idSmStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid service ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка в параметре id_sm"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	idRecStr := c.Param("id_rec")
 	idRec, err := strconv.Atoi(idRecStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid port ID"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка в параметре id_rec"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	client, exists := h.services[idSm]
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Метод сервиса не доступен"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
 	// Проверяем, что сервис является RECEIVER
 	if manager.TypeSm != "RECEIVER" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Service is not a RECEIVER"})
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Сервис не является получателем данных"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
-	// Получаем список портов
-	listResponse, err := client.ReceiverClient().ListPorts(context.Background(), &emptypb.Empty{})
+	portToDelete, err := h.GetPortNumberByID(int32(idRec), client)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	var portToDelete *proto.PortDefinition
-	for _, r := range listResponse.Ports {
-		if int(r.IdReceiver) == idRec {
-			portToDelete = r
-			break
-
-		}
-	}
-
-	if portToDelete == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Port not found"})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка при получении номера порта"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 	// Вызываем gRPC метод для удаления порта
 	response, err := client.ReceiverClient().DeletePort(context.Background(), portToDelete)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка при удалении  порта"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response.PortDetails)
 }
