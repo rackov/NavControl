@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -11,8 +12,35 @@ import (
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
 	"github.com/rackov/NavControl/services/rest-api/internal/restgrpc"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+func (h *Handler) GetProtocols(c *gin.Context) {
+	responseNew := []models.TelematicProtocol{}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, client := range h.services {
+		manager, err := client.GetServiceManager(c.Request.Context())
+		if err != nil {
+			continue
+		}
+		if manager.TypeSm != "RECEIVER" {
+			continue
+		}
+		response, err := client.ReceiverClient().GetProtocols(context.Background(), &emptypb.Empty{})
+		if err != nil {
+			continue
+
+		}
+		responseNew = append(responseNew,
+			models.TelematicProtocol{
+				IdSm:         manager.IdSm,
+				ProtocolList: response.ProtocolList,
+			})
+	}
+	c.JSON(http.StatusOK, responseNew)
+}
 func (h *Handler) GetServiceManager(c *gin.Context) {
 	serviceType := c.Param("id")
 

@@ -16,6 +16,7 @@ service RetranslatorControl {
     rpc UpClient(SetClient) returns(Client);
     rpc DownClient(SetClient) returns(Client);
     rpc DeleteClient(SetClient) returns(Client);
+    rpc GetInfoClient(SetClient) returns(Client);
     rpc ListDevices(SetClient) returns(Devices);
 }
 

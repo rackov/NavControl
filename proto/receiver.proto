@@ -38,6 +38,12 @@ service ReceiverControl {
 
   // Удалить порт из конфигурации
   rpc DeletePort(PortDefinition) returns (PortOperationResponse);
+
+  // список протоколов
+  rpc GetProtocols(google.protobuf.Empty) returns (Protocols);
+}
+message Protocols{
+    repeated string protocol_list = 1;
 }
 
 message GetActiveCount{

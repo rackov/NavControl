@@ -29,6 +29,9 @@ func NewGRPCServer(l *logger.Logger, rst *sendegts.SendServer) *GRPCServer {
 		logger: l,
 	}
 }
+func (s *GRPCServer) GetInfoClient(ctx context.Context, cl *proto.SetClient) (*proto.Client, error) {
+	return s.rst.GetInfoClient(cl)
+}
 func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.ServiceManager, error) {
 	return &proto.ServiceManager{
 		PortSm:      int32(50001),

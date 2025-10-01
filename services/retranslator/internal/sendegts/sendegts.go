@@ -205,6 +205,41 @@ func (s *SendServer) db_open() error {
 	return err
 
 }
+func (s *SendServer) GetInfoClient(cl *proto.SetClient) (*proto.Client, error) {
+	client := &proto.Client{}
+	sql := fmt.Sprintf("select ret_json from telematic.list_cl(%d)", cl.IdRetranslator)
+	rows, err := s.db.Query(sql)
+
+	if err != nil {
+		s.log.Info("Ошибка выполнения запроса:", err)
+		return nil, err
+	}
+	for rows.Next() {
+		cl := proto.Client{}
+		str := ""
+		err := rows.Scan(&str)
+		if err != nil {
+			s.log.Info("Ошибка чтения строки:", err)
+			return nil, err
+		}
+		err1 := json.Unmarshal([]byte(str), &cl)
+		if err1 != nil {
+			s.log.Info("Ошибка чтения listing client:", err)
+			return nil, err
+		}
+		if cl.DeviceList == nil {
+			cl.DeviceList = make([]int32, 0)
+		}
+
+		client = &cl
+	}
+	if err := rows.Err(); err != nil {
+		s.log.Info("Ошибка перебора строк:", err)
+		return nil, err
+	}
+	rows.Close()
+	return client, err
+}
 func (s *SendServer) ListClient() (*proto.Clients, error) {
 	sql := "select ret_json from telematic.list_cl(-1)"
 	clients := proto.Clients{}
@@ -283,6 +318,7 @@ func (s *SendServer) UpdateClient(upcl *proto.Client) (*proto.Client, error) {
 
 	return upcl, fmt.Errorf("client not find")
 }
+
 func (s *SendServer) ListDevices(set *proto.SetClient) (*proto.Devices, error) {
 	var devs proto.Devices
 	devs.ListDevice = make([]*proto.Device, 0)

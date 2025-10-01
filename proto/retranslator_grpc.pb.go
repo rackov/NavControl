@@ -24,13 +24,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RetranslatorControl_AddClient_FullMethodName    = "/proto.RetranslatorControl/AddClient"
-	RetranslatorControl_UpdateClient_FullMethodName = "/proto.RetranslatorControl/UpdateClient"
-	RetranslatorControl_ListClient_FullMethodName   = "/proto.RetranslatorControl/ListClient"
-	RetranslatorControl_UpClient_FullMethodName     = "/proto.RetranslatorControl/UpClient"
-	RetranslatorControl_DownClient_FullMethodName   = "/proto.RetranslatorControl/DownClient"
-	RetranslatorControl_DeleteClient_FullMethodName = "/proto.RetranslatorControl/DeleteClient"
-	RetranslatorControl_ListDevices_FullMethodName  = "/proto.RetranslatorControl/ListDevices"
+	RetranslatorControl_AddClient_FullMethodName     = "/proto.RetranslatorControl/AddClient"
+	RetranslatorControl_UpdateClient_FullMethodName  = "/proto.RetranslatorControl/UpdateClient"
+	RetranslatorControl_ListClient_FullMethodName    = "/proto.RetranslatorControl/ListClient"
+	RetranslatorControl_UpClient_FullMethodName      = "/proto.RetranslatorControl/UpClient"
+	RetranslatorControl_DownClient_FullMethodName    = "/proto.RetranslatorControl/DownClient"
+	RetranslatorControl_DeleteClient_FullMethodName  = "/proto.RetranslatorControl/DeleteClient"
+	RetranslatorControl_GetInfoClient_FullMethodName = "/proto.RetranslatorControl/GetInfoClient"
+	RetranslatorControl_ListDevices_FullMethodName   = "/proto.RetranslatorControl/ListDevices"
 )
 
 // RetranslatorControlClient is the client API for RetranslatorControl service.
@@ -43,6 +44,7 @@ type RetranslatorControlClient interface {
 	UpClient(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Client, error)
 	DownClient(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Client, error)
 	DeleteClient(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Client, error)
+	GetInfoClient(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Client, error)
 	ListDevices(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Devices, error)
 }
 
@@ -114,6 +116,16 @@ func (c *retranslatorControlClient) DeleteClient(ctx context.Context, in *SetCli
 	return out, nil
 }
 
+func (c *retranslatorControlClient) GetInfoClient(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Client, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Client)
+	err := c.cc.Invoke(ctx, RetranslatorControl_GetInfoClient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *retranslatorControlClient) ListDevices(ctx context.Context, in *SetClient, opts ...grpc.CallOption) (*Devices, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Devices)
@@ -134,6 +146,7 @@ type RetranslatorControlServer interface {
 	UpClient(context.Context, *SetClient) (*Client, error)
 	DownClient(context.Context, *SetClient) (*Client, error)
 	DeleteClient(context.Context, *SetClient) (*Client, error)
+	GetInfoClient(context.Context, *SetClient) (*Client, error)
 	ListDevices(context.Context, *SetClient) (*Devices, error)
 	mustEmbedUnimplementedRetranslatorControlServer()
 }
@@ -162,6 +175,9 @@ func (UnimplementedRetranslatorControlServer) DownClient(context.Context, *SetCl
 }
 func (UnimplementedRetranslatorControlServer) DeleteClient(context.Context, *SetClient) (*Client, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteClient not implemented")
+}
+func (UnimplementedRetranslatorControlServer) GetInfoClient(context.Context, *SetClient) (*Client, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetInfoClient not implemented")
 }
 func (UnimplementedRetranslatorControlServer) ListDevices(context.Context, *SetClient) (*Devices, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListDevices not implemented")
@@ -295,6 +311,24 @@ func _RetranslatorControl_DeleteClient_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RetranslatorControl_GetInfoClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetClient)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RetranslatorControlServer).GetInfoClient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RetranslatorControl_GetInfoClient_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RetranslatorControlServer).GetInfoClient(ctx, req.(*SetClient))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RetranslatorControl_ListDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetClient)
 	if err := dec(in); err != nil {
@@ -343,6 +377,10 @@ var RetranslatorControl_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteClient",
 			Handler:    _RetranslatorControl_DeleteClient_Handler,
+		},
+		{
+			MethodName: "GetInfoClient",
+			Handler:    _RetranslatorControl_GetInfoClient_Handler,
 		},
 		{
 			MethodName: "ListDevices",

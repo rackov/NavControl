@@ -22,6 +22,7 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.GET("/sm", h.GetServiceModules)
 		controller.POST("/sm", h.CreateServiceModule)
 		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
+		controller.GET("/sm/protocol", h.GetProtocols)
 		// Receiver
 		controller.GET("/receiver", h.ListAllReceiver)
 		controller.GET("/receiver/:id_sm", h.ListPorts)
@@ -39,10 +40,10 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.DELETE("/retranslator/:id_sm/:id_ret", h.DeleteClient)
 		controller.GET("/retranslator/devices/:id_sm", h.ListDevices)
 		//writer
-		router.GET("/writer/:id_sm", h.ListWriters)
-		router.POST("/writer", h.AddWriter)
-		router.DELETE("/writer/:id_sm/:id_wr", h.DeleteWriter)
-		router.PATCH("/writer/:id_sm/:id_wr", h.ChangeActiveWr) //DownWrite UpWrite
+		// router.GET("/writer/:id_sm", h.ListWriters)
+		// router.POST("/writer", h.AddWriter)
+		// router.DELETE("/writer/:id_sm/:id_wr", h.DeleteWriter)
+		// router.PATCH("/writer/:id_sm/:id_wr", h.ChangeActiveWr) //DownWrite UpWrite
 
 	}
 }

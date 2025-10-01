@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/proto"
 	"google.golang.org/grpc"
@@ -43,6 +44,13 @@ func (s *GRPCServer) GetInfo(ctx context.Context, req *emptypb.Empty) (*proto.Se
 		GitUser:        "rackov",
 		GitEmail:       "rackov@gmail.com",
 		GitRemote:      "https://github.com/rackov/NavControl.git",
+	}, nil
+}
+
+// список протоколов
+func (s *GRPCServer) GetProtocols(context.Context, *empty.Empty) (*proto.Protocols, error) {
+	return &proto.Protocols{
+		ProtocolList: []string{"EGTS", "Arnavi"},
 	}, nil
 }
 

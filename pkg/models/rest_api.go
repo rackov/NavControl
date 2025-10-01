@@ -75,7 +75,10 @@ type ServiceModule struct {
 	PortBroker  int    `json:"port_broker"`
 	TopicBroker string `json:"topic_broker"`
 }
-
+type TelematicProtocol struct {
+	IdSm         int      `json:"id_sm"`
+	ProtocolList []string `json:"protocol_list"`
+}
 type ReceiverModule struct {
 	IDReceiver       int    `json:"id_receiver"`
 	IDSm             int    `json:"id_sm"`

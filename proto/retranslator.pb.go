@@ -437,7 +437,7 @@ const file_retranslator_proto_rawDesc = "" +
 	"\tis_active\x18\v \x01(\bR\bisActive\x12 \n" +
 	"\vdescription\x18\f \x01(\tR\vdescription\"2\n" +
 	"\aClients\x12'\n" +
-	"\aclients\x18\x01 \x03(\v2\r.proto.ClientR\aclients2\xe2\x02\n" +
+	"\aclients\x18\x01 \x03(\v2\r.proto.ClientR\aclients2\x94\x03\n" +
 	"\x13RetranslatorControl\x12)\n" +
 	"\tAddClient\x12\r.proto.Client\x1a\r.proto.Client\x12,\n" +
 	"\fUpdateClient\x12\r.proto.Client\x1a\r.proto.Client\x124\n" +
@@ -446,7 +446,8 @@ const file_retranslator_proto_rawDesc = "" +
 	"\bUpClient\x12\x10.proto.SetClient\x1a\r.proto.Client\x12-\n" +
 	"\n" +
 	"DownClient\x12\x10.proto.SetClient\x1a\r.proto.Client\x12/\n" +
-	"\fDeleteClient\x12\x10.proto.SetClient\x1a\r.proto.Client\x12/\n" +
+	"\fDeleteClient\x12\x10.proto.SetClient\x1a\r.proto.Client\x120\n" +
+	"\rGetInfoClient\x12\x10.proto.SetClient\x1a\r.proto.Client\x12/\n" +
 	"\vListDevices\x12\x10.proto.SetClient\x1a\x0e.proto.DevicesB\x12Z\x10NavControl/protob\x06proto3"
 
 var (
@@ -481,16 +482,18 @@ var file_retranslator_proto_depIdxs = []int32{
 	3,  // 6: proto.RetranslatorControl.UpClient:input_type -> proto.SetClient
 	3,  // 7: proto.RetranslatorControl.DownClient:input_type -> proto.SetClient
 	3,  // 8: proto.RetranslatorControl.DeleteClient:input_type -> proto.SetClient
-	3,  // 9: proto.RetranslatorControl.ListDevices:input_type -> proto.SetClient
-	4,  // 10: proto.RetranslatorControl.AddClient:output_type -> proto.Client
-	4,  // 11: proto.RetranslatorControl.UpdateClient:output_type -> proto.Client
-	5,  // 12: proto.RetranslatorControl.ListClient:output_type -> proto.Clients
-	4,  // 13: proto.RetranslatorControl.UpClient:output_type -> proto.Client
-	4,  // 14: proto.RetranslatorControl.DownClient:output_type -> proto.Client
-	4,  // 15: proto.RetranslatorControl.DeleteClient:output_type -> proto.Client
-	2,  // 16: proto.RetranslatorControl.ListDevices:output_type -> proto.Devices
-	10, // [10:17] is the sub-list for method output_type
-	3,  // [3:10] is the sub-list for method input_type
+	3,  // 9: proto.RetranslatorControl.GetInfoClient:input_type -> proto.SetClient
+	3,  // 10: proto.RetranslatorControl.ListDevices:input_type -> proto.SetClient
+	4,  // 11: proto.RetranslatorControl.AddClient:output_type -> proto.Client
+	4,  // 12: proto.RetranslatorControl.UpdateClient:output_type -> proto.Client
+	5,  // 13: proto.RetranslatorControl.ListClient:output_type -> proto.Clients
+	4,  // 14: proto.RetranslatorControl.UpClient:output_type -> proto.Client
+	4,  // 15: proto.RetranslatorControl.DownClient:output_type -> proto.Client
+	4,  // 16: proto.RetranslatorControl.DeleteClient:output_type -> proto.Client
+	4,  // 17: proto.RetranslatorControl.GetInfoClient:output_type -> proto.Client
+	2,  // 18: proto.RetranslatorControl.ListDevices:output_type -> proto.Devices
+	11, // [11:19] is the sub-list for method output_type
+	3,  // [3:11] is the sub-list for method input_type
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name

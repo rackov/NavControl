@@ -33,6 +33,7 @@ const (
 	ReceiverControl_ClosePort_FullMethodName                 = "/proto.ReceiverControl/ClosePort"
 	ReceiverControl_AddPort_FullMethodName                   = "/proto.ReceiverControl/AddPort"
 	ReceiverControl_DeletePort_FullMethodName                = "/proto.ReceiverControl/DeletePort"
+	ReceiverControl_GetProtocols_FullMethodName              = "/proto.ReceiverControl/GetProtocols"
 )
 
 // ReceiverControlClient is the client API for ReceiverControl service.
@@ -59,6 +60,8 @@ type ReceiverControlClient interface {
 	AddPort(ctx context.Context, in *PortDefinition, opts ...grpc.CallOption) (*PortOperationResponse, error)
 	// Удалить порт из конфигурации
 	DeletePort(ctx context.Context, in *PortDefinition, opts ...grpc.CallOption) (*PortOperationResponse, error)
+	// список протоколов
+	GetProtocols(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Protocols, error)
 }
 
 type receiverControlClient struct {
@@ -159,6 +162,16 @@ func (c *receiverControlClient) DeletePort(ctx context.Context, in *PortDefiniti
 	return out, nil
 }
 
+func (c *receiverControlClient) GetProtocols(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*Protocols, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Protocols)
+	err := c.cc.Invoke(ctx, ReceiverControl_GetProtocols_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ReceiverControlServer is the server API for ReceiverControl service.
 // All implementations must embed UnimplementedReceiverControlServer
 // for forward compatibility.
@@ -183,6 +196,8 @@ type ReceiverControlServer interface {
 	AddPort(context.Context, *PortDefinition) (*PortOperationResponse, error)
 	// Удалить порт из конфигурации
 	DeletePort(context.Context, *PortDefinition) (*PortOperationResponse, error)
+	// список протоколов
+	GetProtocols(context.Context, *empty.Empty) (*Protocols, error)
 	mustEmbedUnimplementedReceiverControlServer()
 }
 
@@ -219,6 +234,9 @@ func (UnimplementedReceiverControlServer) AddPort(context.Context, *PortDefiniti
 }
 func (UnimplementedReceiverControlServer) DeletePort(context.Context, *PortDefinition) (*PortOperationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeletePort not implemented")
+}
+func (UnimplementedReceiverControlServer) GetProtocols(context.Context, *empty.Empty) (*Protocols, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetProtocols not implemented")
 }
 func (UnimplementedReceiverControlServer) mustEmbedUnimplementedReceiverControlServer() {}
 func (UnimplementedReceiverControlServer) testEmbeddedByValue()                         {}
@@ -403,6 +421,24 @@ func _ReceiverControl_DeletePort_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReceiverControl_GetProtocols_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReceiverControlServer).GetProtocols(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReceiverControl_GetProtocols_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReceiverControlServer).GetProtocols(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ReceiverControl_ServiceDesc is the grpc.ServiceDesc for ReceiverControl service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -445,6 +481,10 @@ var ReceiverControl_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeletePort",
 			Handler:    _ReceiverControl_DeletePort_Handler,
+		},
+		{
+			MethodName: "GetProtocols",
+			Handler:    _ReceiverControl_GetProtocols_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
