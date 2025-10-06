@@ -1,24 +1,36 @@
-description = "Пример конфигурации для ControlWriter"
-name = "writer-service"
 id_sm = 1
-ip_sm = ""
-grpc_port = 50051
+description = "Сервис записи навигационных данных в БД"
+name = "NavData Writer Service"
+grpc_port = 9090
 metric_port = 9091
 nats_address = "nats://localhost:4222"
-nats_topic = "nav.*"
-nats_timeout = 5
-id_writer = 1
-db_ip = "localhost"
-db_port = 5432
-db_name = "nsm"
-db_user = "nsmsave"
-db_pass = "rr1971"
-db_table = "one.temp"
+nats_topic = "navigation.data"
 
 [log_config]
 log_level = "info"
-log_file_path = "logs/writer.log"
+log_file = "/log/writer.log"
 max_size = 100
-max_backups = 3
-max_age = 28
-compress = true
+max_age = 30
+max_backups = 10
+
+[[writers]]
+description = "Основная база данных PostgreSQL"
+name = "PostgreSQL Writer"
+id_writer = 1
+ip_db = "127.0.0.1"
+port_db = 5432
+name_db = "navdata"
+login = "navuser"
+passw_db = "navpass"
+table_db = "navigation_points"
+
+[[writers]]
+description = "Резервная база данных"
+name = "Backup MySQL Writer"
+id_writer = 2
+ip_db = "127.0.0.2"
+port_db = 3306
+name_db = "navbackup"
+login = "backupuser"
+passw_db = "backuppass"
+table_db = "positions"

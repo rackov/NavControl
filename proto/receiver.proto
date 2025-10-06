@@ -85,13 +85,20 @@ message GetClientsRequest {
   string protocol_name = 1;
   int32 port_receiver =2;
 }
-
+message IdInfo  {
+  int32 tid = 1;
+  string imei = 2;
+}
 message ClientInfo {
   string id = 1;
   string address = 2;
   string protocol_name = 3;
-  string connect_time = 4;
+  int32 connect_time = 4;
   int32  last_time = 5;
+  int32  port_receiver = 6;
+  int32 id_receiver=7;
+  int64 count_packets=9;
+  IdInfo device=8;
 }
 
 message GetClientsResponse {

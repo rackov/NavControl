@@ -264,7 +264,7 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 	}
 
 	pm.ports[portNumber] = portInfo
-	pm.logger.Infof("Added port %d with protocol %s", portNumber, protocolName)
+	pm.logger.Infof("Added portifo %+v", portInfo)
 	nat := models.NatsConf{Nc: pm.nc, Topic: pm.cfg.NatsTopic}
 	// Если порт должен быть активным, запускаем его
 	if active {
@@ -278,9 +278,8 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) error {
 
 	cfgrec := config.Receiver{}
-	newId := pm.newId()
 	index := pm.findPort(int(req.PortReceiver))
-	cfgrec.IdReceiver = int(req.IdReceiver) + 1
+	cfgrec.IdReceiver = int(req.IdReceiver)
 	cfgrec.Active = req.Active
 	cfgrec.Name = req.Name
 	cfgrec.PortReceiver = int(req.PortReceiver)
@@ -289,10 +288,9 @@ func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) 
 	cfgrec.Description = req.Description
 
 	pm.muCfg.Lock()
-	defer pm.muCfg.Unlock()
+
 	switch change {
 	case "add":
-		cfgrec.IdReceiver = newId + 1
 		pm.cfg.Receivers = append(pm.cfg.Receivers, cfgrec)
 	case "edit":
 		if index != -1 {
@@ -305,7 +303,7 @@ func (pm *PortManager) SaveConfigPort(change string, req *proto.PortDefinition) 
 
 		}
 	}
-
+	pm.muCfg.Unlock()
 	return pm.cfg.SaveCfg(pm.cfg.Filename)
 }
 func (pm *PortManager) findPort(port int) (index int) {
@@ -319,7 +317,7 @@ func (pm *PortManager) findPort(port int) (index int) {
 	}
 	return index
 }
-func (pm *PortManager) newId() int {
+func (pm *PortManager) NewId() int {
 	pm.muCfg.RLock()
 	defer pm.muCfg.RUnlock()
 	id := 0
@@ -342,17 +340,32 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 		return fmt.Errorf("port %d not found", portNumber)
 	}
 
+	// При повторном запуске создаем новый экземпляр протокола
+	// Это гарантирует, что мы получим новый "адрес" (новый слушатель)
+	var protocolInstance protocol.NavigationProtocol
+	switch portInfo.Protocol {
+	case "Arnavi":
+		arnaviProto := arnavi.NewArnaviProtocol(pm.logger)
+		protocolInstance = arnaviProto
+	case "EGTS":
+		protocolInstance = egts.NewEgtsProtocol(pm.logger)
+	default:
+		return fmt.Errorf("unsupported protocol: %s", portInfo.Protocol)
+	}
+
 	if portInfo.Active {
 		return fmt.Errorf("port %d is already active", portNumber)
 	}
 	nat := models.NatsConf{Nc: pm.nc, Topic: pm.cfg.NatsTopic}
 
-	err := portInfo.ProtocolInstance.Start(int(portNumber), nat)
+	// Запускаем новый экземпляр протокола
+	err := protocolInstance.Start(int(portNumber), nat)
 	if err != nil {
 		return err
 	}
 
 	pm.mu.Lock()
+	portInfo.ProtocolInstance = protocolInstance
 	portInfo.Active = true
 	pm.mu.Unlock()
 
@@ -485,8 +498,17 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					Id:           client.ID,
 					Address:      client.RemoteAddr,
 					ConnectTime:  client.ConnectTime,
+					LastTime:     client.LastTime,
 					ProtocolName: client.Protocol,
+					PortReceiver: portInfo.PortReceiver,
+					IdReceiver:   portInfo.IdReceiver,
+					CountPackets: client.CountPackets,
+					Device: &proto.IdInfo{
+						Imei: client.Device.Imei,
+						Tid:  client.Device.Tid,
+					},
 				})
+
 			}
 		}
 		if egtsProto, ok := portInfo.ProtocolInstance.(*egts.EgtsProtocol); ok {
@@ -496,7 +518,15 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					Id:           client.ID,
 					Address:      client.RemoteAddr,
 					ConnectTime:  client.ConnectTime,
+					LastTime:     client.LastTime,
 					ProtocolName: client.Protocol,
+					PortReceiver: portInfo.PortReceiver,
+					IdReceiver:   portInfo.IdReceiver,
+					CountPackets: client.CountPackets,
+					Device: &proto.IdInfo{
+						Imei: client.Device.Imei,
+						Tid:  client.Device.Tid,
+					},
 				})
 			}
 		}
@@ -516,7 +546,15 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					Id:           client.ID,
 					Address:      client.RemoteAddr,
 					ConnectTime:  client.ConnectTime,
+					LastTime:     client.LastTime,
 					ProtocolName: client.Protocol,
+					PortReceiver: portInfo.PortReceiver,
+					IdReceiver:   portInfo.IdReceiver,
+					CountPackets: client.CountPackets,
+					Device: &proto.IdInfo{
+						Imei: client.Device.Imei,
+						Tid:  client.Device.Tid,
+					},
 				})
 			}
 		}
@@ -527,7 +565,15 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					Id:           client.ID,
 					Address:      client.RemoteAddr,
 					ConnectTime:  client.ConnectTime,
+					LastTime:     client.LastTime,
 					ProtocolName: client.Protocol,
+					PortReceiver: portInfo.PortReceiver,
+					IdReceiver:   portInfo.IdReceiver,
+					CountPackets: client.CountPackets,
+					Device: &proto.IdInfo{
+						Imei: client.Device.Imei,
+						Tid:  client.Device.Tid,
+					},
 				})
 			}
 		}

@@ -29,7 +29,7 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.POST("/receiver", h.AddPort)
 		controller.PATCH("/receiver/:id_sm/:id_rec", h.ChangeActive) // ClosePort, OpenPort
 		controller.DELETE("/receiver/:id_sm/:id_rec", h.DeletePort)
-		controller.GET("/receiver/client/:id_sm", h.GetConnectedClients)
+		controller.GET("/receiver/client/", h.GetConnectedClients)
 		controller.POST("/receiver/client/:id_sm", h.DisconnectClient)
 		// Retranslator
 		controller.GET("/retranslator", h.ListAllRetranslator)

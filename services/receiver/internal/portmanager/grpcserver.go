@@ -172,6 +172,7 @@ func (s *GRPCServer) ClosePort(ctx context.Context, req *proto.PortDefinition) (
 
 // AddPort добавляет новый порт в конфигурацию
 func (s *GRPCServer) AddPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
+	req.IdReceiver = int32(s.pm.NewId() + 1)
 	err := s.pm.AddPort(req)
 	if err != nil {
 		return &proto.PortOperationResponse{

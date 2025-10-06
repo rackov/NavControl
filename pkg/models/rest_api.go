@@ -91,6 +91,22 @@ type ReceiverModule struct {
 	Description      string `json:"description"`
 	ConnectionsCount int    `json:"connections_count"`
 }
+type IdInfo struct {
+	Imei string `json:"imei"`
+	Tid  int32  `json:"tid"`
+}
+type Clients struct {
+	IDReceiver   int    `json:"id_receiver"`
+	IDSm         int    `json:"id_sm"`
+	ClientID     string `json:"client_id"`
+	Address      string `json:"address"`
+	ProtocolName string `json:"protocol_name"`
+	PortReceiver int    `json:"port_receiver"`
+	ConnectTime  int    `json:"connect_time"`
+	LastTime     int    `json:"last_time"`
+	CountPackets int    `json:"count_packets"`
+	IdInfo       IdInfo `json:"number_device"`
+}
 
 type WriterModule struct {
 	IDWriter    int    `json:"id_writer"`

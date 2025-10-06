@@ -124,16 +124,67 @@ func (h *Handler) ListPorts(c *gin.Context) {
 func (h *Handler) GetPortStatus(c *gin.Context) {
 	// TODO: Реализовать при необходимости
 }
+func (h *Handler) ListAllClients(ctx context.Context) (conClients []models.Clients) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	for _, client := range h.services {
+		manager, err := client.GetServiceManager(ctx)
+		if err != nil {
+			continue
+		}
+		if manager.TypeSm != "RECEIVER" {
+			continue
+		}
+		response, err := client.ReceiverClient().GetConnectedClients(context.Background(), &proto.GetClientsRequest{})
+		if err != nil {
+			continue
+
+		}
+		// Исправленный вариант
+		for _, r := range response.Clients {
+			clientInfo := models.Clients{
+				IDReceiver:   int(r.IdReceiver),
+				IDSm:         manager.IdSm,
+				PortReceiver: int(r.PortReceiver),
+				Address:      r.Address,
+				ProtocolName: r.ProtocolName,
+				ClientID:     r.Id,
+				ConnectTime:  int(r.ConnectTime),
+				LastTime:     int(r.LastTime),
+				CountPackets: int(r.CountPackets),
+			}
+
+			// Проверяем, что Device не nil перед обращением к его полям
+			if r.Device != nil {
+				clientInfo.IdInfo = models.IdInfo{
+					Tid:  r.Device.Tid,
+					Imei: r.Device.Imei,
+				}
+			}
+
+			conClients = append(conClients, clientInfo)
+		}
+	}
+	return
+}
 
 // GetConnectedClients получает список подключенных клиентов
 func (h *Handler) GetConnectedClients(c *gin.Context) {
 	errUse := models.UsesMsgError{}
+	id_sm := c.Query("id_sm")
+	id_rec := c.Query("id_rec")
 
-	idStr := c.Param("id_sm")
-	id, err := strconv.Atoi(idStr)
+	if id_sm == "" {
+		conClients := h.ListAllClients(c.Request.Context())
+		c.JSON(http.StatusOK, conClients)
+		return
+
+	}
+	id, err := strconv.Atoi(id_sm)
 	if err != nil {
 		errUse.ErrorMsg = err.Error()
-		errUse.ErrorTitle = "Неверный ID сервиса"
+		errUse.ErrorTitle = "Неверный id_sm сервиса"
 		errUse.HttpCode = http.StatusBadRequest
 		c.JSON(errUse.HttpCode, errUse)
 		return
@@ -147,7 +198,6 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
-
 	// Проверяем соединение и получаем клиент
 	manager, err := client.GetServiceManager(c.Request.Context())
 	if err != nil {
@@ -166,31 +216,28 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
-
-	// Получаем параметры запроса
-	protocolName := c.Query("protocol_name")
-	portReceiverStr := c.Query("port_receiver")
-
-	var portReceiver int32
-	if portReceiverStr != "" {
-		port, err := strconv.ParseInt(portReceiverStr, 10, 32)
+	request := &proto.GetClientsRequest{}
+	var idRec int
+	if id_rec != "" {
+		idRec, err = strconv.Atoi(id_rec)
 		if err != nil {
 			errUse.ErrorMsg = err.Error()
-			errUse.ErrorTitle = "Неверный параметр port_receiver"
+			errUse.ErrorTitle = "Неверный id_receiver сервиса"
 			errUse.HttpCode = http.StatusBadRequest
 			c.JSON(errUse.HttpCode, errUse)
 			return
 		}
-		portReceiver = int32(port)
+		portDef, err := h.GetPortNumberByID(int32(idRec), client)
+		if err != nil {
+			errUse.ErrorMsg = err.Error()
+			errUse.ErrorTitle = "Ошибка при получении номера порта"
+			errUse.HttpCode = http.StatusBadRequest
+			c.JSON(errUse.HttpCode, errUse)
+			return
+		}
+		request.PortReceiver = portDef.PortReceiver
 	}
 
-	// Создаем запрос
-	request := &proto.GetClientsRequest{
-		ProtocolName: protocolName,
-		PortReceiver: portReceiver,
-	}
-
-	// Вызываем gRPC метод для получения списка клиентов
 	response, err := client.ReceiverClient().GetConnectedClients(context.Background(), request)
 	if err != nil {
 		errUse.ErrorMsg = err.Error()
@@ -199,8 +246,33 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 		c.JSON(errUse.HttpCode, errUse)
 		return
 	}
+	conClients := []models.Clients{}
+	// Исправленный вариант в GetConnectedClients
+	for _, r := range response.Clients {
+		clientInfo := models.Clients{
+			IDReceiver:   int(r.IdReceiver),
+			IDSm:         manager.IdSm,
+			PortReceiver: int(r.PortReceiver),
+			Address:      r.Address,
+			ProtocolName: r.ProtocolName,
+			ClientID:     r.Id,
+			ConnectTime:  int(r.ConnectTime),
+			LastTime:     int(r.LastTime),
+			CountPackets: int(r.CountPackets),
+		}
 
-	c.JSON(http.StatusOK, response)
+		// Проверяем, что Device не nil перед обращением к его полям
+		if r.Device != nil {
+			clientInfo.IdInfo = models.IdInfo{
+				Tid:  r.Device.Tid,
+				Imei: r.Device.Imei,
+			}
+		}
+
+		conClients = append(conClients, clientInfo)
+	}
+
+	c.JSON(http.StatusOK, conClients)
 }
 
 // DisconnectClient отключает клиента
@@ -519,7 +591,7 @@ func (h *Handler) DeletePort(c *gin.Context) {
 		return
 	}
 	// Вызываем gRPC метод для удаления порта
-	response, err := client.ReceiverClient().DeletePort(context.Background(), portToDelete)
+	_, err = client.ReceiverClient().DeletePort(context.Background(), portToDelete)
 	if err != nil {
 		errUse.ErrorMsg = err.Error()
 		errUse.ErrorTitle = "Ошибка при удалении  порта"
@@ -528,5 +600,5 @@ func (h *Handler) DeletePort(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response.PortDetails)
+	c.JSON(http.StatusOK, portToDelete)
 }

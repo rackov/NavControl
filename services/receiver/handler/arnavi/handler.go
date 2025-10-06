@@ -33,12 +33,21 @@ func init() {
 	prometheus.MustRegister(connectedDevices)
 }
 
+// id_imei
+type IdInfo struct {
+	Imei string `json:"imei"`
+	Tid  int32  `json:"tid"`
+}
+
 // ClientInfo содержит информацию о подключенном клиенте
 type ClientInfo struct {
-	ID          string
-	RemoteAddr  string
-	ConnectTime string
-	Protocol    string
+	ID           string
+	RemoteAddr   string
+	ConnectTime  int32
+	Protocol     string
+	LastTime     int32
+	Device       IdInfo
+	CountPackets int64
 }
 
 // ArnaviProtocol реализует интерфейс NavigationProtocol для протокола Arnavi
@@ -50,7 +59,14 @@ type ArnaviProtocol struct {
 	clientsMu   sync.Mutex
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
-	logger      *logger.Logger
+
+	logger        *logger.Logger
+	conn          net.Conn
+	authorization bool
+	log           *logrus.Entry
+	id            int // номер принятого пакета, если пакет отправлен то =0
+	ImeiId        uint64
+	nc            models.NatsConf
 }
 
 // NewArnaviProtocol создает новый экземпляр протокола Arnavi
@@ -114,7 +130,8 @@ func (a *ArnaviProtocol) handleConnections(nc models.NatsConf) {
 				ID:          clientID,
 				RemoteAddr:  conn.RemoteAddr().String(),
 				Protocol:    a.GetName(),
-				ConnectTime: time.Now().Format(time.RFC3339),
+				ConnectTime: int32(time.Now().Unix()),
+				LastTime:    int32(time.Now().Unix()),
 			}
 
 			//	"Client %s connected  Protocol: %s", clientID, a.GetName())
@@ -217,26 +234,25 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, nc mod
 	logcl.Info("Client connected")
 
 	// парсинг данных из протокола Arnavi
-	concl := &ConClient{
-		conn:          conn,
-		authorization: false,
-		log:           logcl,
-		nc:            nc,
-	}
-	concl.process_connection()
+
+	a.conn = conn
+	a.authorization = false
+	a.log = logcl
+	a.nc = nc
+	a.process_connection(clientID)
 
 }
 
-type ConClient struct {
-	conn          net.Conn
-	authorization bool
-	log           *logrus.Entry
-	id            int // номер принятого пакета, если пакет отправлен то =0
-	ImeiId        uint64
-	nc            models.NatsConf
-}
+// type ConClient struct {
+// 	conn          net.Conn
+// 	authorization bool
+// 	log           *logrus.Entry
+// 	id            int // номер принятого пакета, если пакет отправлен то =0
+// 	ImeiId        uint64
+// 	nc            models.NatsConf
+// }
 
-func (sc *ConClient) process_connection() {
+func (sc *ArnaviProtocol) process_connection(clientID string) {
 	local_info := sc.conn.RemoteAddr()
 	readBuf := make([]byte, 1024)
 	localBuffer := new(bytes.Buffer)
@@ -254,7 +270,7 @@ func (sc *ConClient) process_connection() {
 			sc.log.Debugf("dump:\n%s", hex.Dump(readBuf[:n]))
 			localBuffer.Write(readBuf[:n])
 
-			err = sc.processExistingData(localBuffer)
+			err = sc.processExistingData(localBuffer, clientID)
 
 			if err != nil {
 				sc.log.Infof("ошибка %v", err)
@@ -265,7 +281,7 @@ func (sc *ConClient) process_connection() {
 	sc.log.Infof("Disconnected from %s\n error: %v", local_info, err)
 
 }
-func (sc *ConClient) processExistingData(data *bytes.Buffer) error {
+func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID string) error {
 	var (
 		err error
 	)
@@ -312,14 +328,14 @@ func (sc *ConClient) processExistingData(data *bytes.Buffer) error {
 			return err
 		}
 		// запись пакета
-		err = sc.savePacket(data)
+		err = sc.savePacket(data, clientID)
 		if err != nil {
 			return err
 		}
 		data.Next(int(scp.LengthPacket) + 8)
 	}
 }
-func (sc *ConClient) Authorization(data *bytes.Buffer) error {
+func (sc *ArnaviProtocol) Authorization(data *bytes.Buffer) error {
 	var (
 		err error
 	)
@@ -358,7 +374,7 @@ func (sc *ConClient) Authorization(data *bytes.Buffer) error {
 
 	return err
 }
-func (sc *ConClient) finishpacked() error {
+func (sc *ArnaviProtocol) finishpacked() error {
 	var err error
 	buf, err := AnswerPacked(sc.id)
 
@@ -373,7 +389,7 @@ func (sc *ConClient) finishpacked() error {
 
 }
 
-func (sc *ConClient) savePacket(data *bytes.Buffer) error {
+func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error {
 	var err error
 	packets := PacketS{}
 	buf := data.Bytes()
@@ -422,6 +438,14 @@ func (sc *ConClient) savePacket(data *bytes.Buffer) error {
 		}
 		return err
 	}
+	sc.clientsMu.Lock()
+	if client, exists := sc.clients[clientID]; exists {
+		client.LastTime = int32(time.Now().Unix())
+		client.Device = IdInfo{Tid: 0, Imei: record.RecNav[0].Imei}
+		client.CountPackets++
+		sc.clients[clientID] = client
+	}
+	sc.clientsMu.Unlock()
 
 	return err
 }

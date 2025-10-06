@@ -36,12 +36,21 @@ func init() {
 	prometheus.MustRegister(connectedDevices1)
 }
 
+// id_imei
+type IdInfo struct {
+	Imei string `json:"imei"`
+	Tid  int32  `json:"tid"`
+}
+
 // ClientInfo содержит информацию о подключенном клиенте
 type ClientInfo struct {
-	ID          string
-	RemoteAddr  string
-	ConnectTime string
-	Protocol    string
+	ID           string
+	RemoteAddr   string
+	ConnectTime  int32
+	Protocol     string
+	LastTime     int32
+	Device       IdInfo
+	CountPackets int64
 }
 
 // EgtsProtocol реализует интерфейс NavigationProtocol для протокола Arnavi
@@ -54,6 +63,11 @@ type EgtsProtocol struct {
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
 	logger      *logger.Logger
+	// Egts клиент
+	conn      net.Conn
+	isPkgSave bool
+	nc        models.NatsConf
+	log       *logrus.Entry
 }
 
 // NewEgtsProtocol создает новый экземпляр протокола Arnavi
@@ -117,7 +131,8 @@ func (a *EgtsProtocol) handleConnections(nc models.NatsConf) {
 				ID:          clientID,
 				RemoteAddr:  conn.RemoteAddr().String(),
 				Protocol:    a.GetName(),
-				ConnectTime: time.Now().Format(time.RFC3339),
+				ConnectTime: int32(time.Now().Unix()),
+				LastTime:    int32(time.Now().Unix()),
 			}
 
 			//	"Client %s connected  Protocol: %s", clientID, a.GetName())
@@ -220,24 +235,24 @@ func (a *EgtsProtocol) handleConnection(conn net.Conn, clientID string, nc model
 	logcl.Info("Client connected")
 
 	// парсинг данных из протокола Arnavi
-	concl := &ConClient{
-		conn:      conn,
-		isPkgSave: true,
-		log:       logcl,
-		nc:        nc,
-	}
-	concl.process_connection()
+
+	a.conn = conn
+	a.isPkgSave = true
+	a.log = logcl
+	a.nc = nc
+
+	a.process_connection(clientID)
 
 }
 
-type ConClient struct {
-	conn      net.Conn
-	isPkgSave bool
-	nc        models.NatsConf
-	log       *logrus.Entry
-}
+// type ConClient struct {
+// 	conn      net.Conn
+// 	isPkgSave bool
+// 	nc        models.NatsConf
+// 	log       *logrus.Entry
+// }
 
-func (eg *ConClient) process_connection() {
+func (eg *EgtsProtocol) process_connection(clientID string) {
 
 	var (
 		srResultCodePkg   []byte
@@ -487,6 +502,16 @@ func (eg *ConClient) process_connection() {
 							eg.nc.Nc.Close()
 						}
 						return
+					}
+					if len(exportPackets.RecNav) > 0 {
+						eg.clientsMu.Lock()
+						if client, exists := eg.clients[clientID]; exists {
+							client.LastTime = int32(time.Now().Unix())
+							client.Device = IdInfo{Tid: int32(exportPackets.RecNav[0].Client), Imei: exportPackets.RecNav[0].Imei}
+							client.CountPackets++
+							eg.clients[clientID] = client
+						}
+						eg.clientsMu.Unlock()
 					}
 				}
 			}
