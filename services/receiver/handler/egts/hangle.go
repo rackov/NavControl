@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 	"github.com/sirupsen/logrus"
@@ -62,16 +61,15 @@ type EgtsProtocol struct {
 	clientsMu   sync.Mutex
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
-	logger      *logger.Logger
+	logger      *logrus.Entry
 	// Egts клиент
 	conn      net.Conn
 	isPkgSave bool
 	nc        models.NatsConf
-	log       *logrus.Entry
 }
 
 // NewEgtsProtocol создает новый экземпляр протокола Arnavi
-func NewEgtsProtocol(log *logger.Logger) protocol.NavigationProtocol {
+func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &EgtsProtocol{
 		ctx:         ctx,
@@ -238,7 +236,7 @@ func (a *EgtsProtocol) handleConnection(conn net.Conn, clientID string, nc model
 
 	a.conn = conn
 	a.isPkgSave = true
-	a.log = logcl
+	a.logger = logcl
 	a.nc = nc
 
 	a.process_connection(clientID)
@@ -284,7 +282,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 
 			// если пакет не егтс формата закрываем соединение
 			if headerBuf[0] != 0x01 {
-				eg.log.Warn("Пакет не соответствует формату ЕГТС. Закрыто соединение")
+				eg.logger.Warn("Пакет не соответствует формату ЕГТС. Закрыто соединение")
 				return
 			}
 
@@ -299,7 +297,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 			_, err := io.ReadFull(local, buf)
 
 			if err != nil {
-				eg.log.WithField("err", err).Error("Ошибка при получении тела пакета")
+				eg.logger.WithField("err", err).Error("Ошибка при получении тела пакета")
 				return
 			}
 
@@ -307,7 +305,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 			recvPacket = append(headerBuf, buf...)
 		case io.EOF:
 			<-connTimer.C
-			eg.log.Info("Соединение закрыто ")
+			eg.logger.Info("Соединение закрыто ")
 			return
 		default:
 			//	local.Close()
@@ -315,16 +313,16 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 			return
 		}
 
-		eg.log.WithField("packet", fmt.Sprintf("%x", recvPacket)).Debug("Принят пакет")
+		eg.logger.WithField("packet", fmt.Sprintf("%x", recvPacket)).Debug("Принят пакет")
 		pkg := Package{}
 		receivedTimestamp := time.Now().UTC().Unix()
 		resultCode, err := pkg.Decode(recvPacket)
 		if err != nil {
-			eg.log.WithField("err", err).Error("Ошибка расшифровки пакета")
+			eg.logger.WithField("err", err).Error("Ошибка расшифровки пакета")
 
 			resp, err := createPtResponse(pkg.PacketIdentifier, resultCode, serviceType, nil)
 			if err != nil {
-				eg.log.WithField("err", err).Error("Ошибка сборки ответа EGTS_PT_RESPONSE с ошибкой")
+				eg.logger.WithField("err", err).Error("Ошибка сборки ответа EGTS_PT_RESPONSE с ошибкой")
 				goto Received
 			}
 			_, _ = local.Write(resp)
@@ -333,7 +331,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 		}
 		switch pkg.PacketType {
 		case EGTS_PT_APPDATA:
-			eg.log.Debug("Тип пакета EGTS_PT_APPDATA")
+			eg.logger.Debug("Тип пакета EGTS_PT_APPDATA")
 
 			for _, rec := range *pkg.ServicesFrameData.(*ServiceDataSet) {
 				// создаем переменную выгрузки
@@ -366,7 +364,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 				for _, subRec := range rec.RecordDataSet {
 					switch subRecData := subRec.SubrecordData.(type) {
 					case *SrTermIdentity:
-						eg.log.Debug("Разбор подзаписи EGTS_SR_TERM_IDENTITY")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_TERM_IDENTITY")
 
 						// на случай если секция с данными не содержит oid
 						client = subRecData.TerminalIdentifier
@@ -374,18 +372,18 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						Imei = subRecData.IMEI
 						Imsi = subRecData.IMSI
 						if srResultCodePkg, err = createSrResultCode(pkg.PacketIdentifier, egtsPcOk); err != nil {
-							eg.log.Errorf("Ошибка сборки EGTS_SR_RESULT_CODE: %v", err)
+							eg.logger.Errorf("Ошибка сборки EGTS_SR_RESULT_CODE: %v", err)
 						}
 					case *SrAuthInfo:
-						eg.log.Debug("Разбор подзаписи EGTS_SR_AUTH_INFO")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_AUTH_INFO")
 						if srResultCodePkg, err = createSrResultCode(pkg.PacketIdentifier, egtsPcOk); err != nil {
-							eg.log.Errorf("Ошибка сборки EGTS_SR_RESULT_CODE: %v", err)
+							eg.logger.Errorf("Ошибка сборки EGTS_SR_RESULT_CODE: %v", err)
 						}
 					case *SrResponse:
-						eg.log.Debugf("Разбор подзаписи EGTS_SR_RESPONSE")
+						eg.logger.Debugf("Разбор подзаписи EGTS_SR_RESPONSE")
 						goto Received
 					case *SrPosData:
-						eg.log.Debugf("Разбор подзаписи EGTS_SR_POS_DATA")
+						eg.logger.Debugf("Разбор подзаписи EGTS_SR_POS_DATA")
 
 						exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						exportPackets.RecNav[i].Imei = Imei
@@ -410,7 +408,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_EXT_POS_DATA")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_EXT_POS_DATA")
 						exportPackets.RecNav[k].Nsat = subRecData.Satellites
 						exportPackets.RecNav[k].Pdop = subRecData.PositionDilutionOfPrecision
 						exportPackets.RecNav[k].Hdop = subRecData.HorizontalDilutionOfPrecision
@@ -424,7 +422,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_AD_SENSORS_DATA")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_AD_SENSORS_DATA")
 						exportPackets.RecNav[k].DigSenOuts = append(exportPackets.RecNav[k].DigSenOuts, int(subRecData.DigitalOutputs))
 						exportPackets.RecNav[k].DigSenonrs = append(exportPackets.RecNav[k].DigSenonrs, models.DopDigIn{Dioe: subRecData.DigitalInputsOctetExists, Adio: subRecData.AdditionalDigitalInputsOctet})
 
@@ -437,7 +435,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_ABS_AN_SENS_DATA")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_ABS_AN_SENS_DATA")
 						exportPackets.RecNav[k].AnSenAbs = append(exportPackets.RecNav[k].AnSenAbs, models.Sensor{SensorNumber: subRecData.SensorNumber, Value: subRecData.Value})
 					case *SrAbsDigSensData:
 						k := 0
@@ -446,7 +444,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_ABS_DIG_SENS_DATA")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_ABS_DIG_SENS_DATA")
 						exportPackets.RecNav[k].DigSenAbs = append(exportPackets.RecNav[k].DigSenAbs, models.DiSensor{StateNumber: subRecData.StateNumber, Number: subRecData.Number})
 
 					case *SrAbsCntrData:
@@ -456,7 +454,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_ABS_CNTR_DATA")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_ABS_CNTR_DATA")
 
 						switch subRecData.CounterNumber {
 						case 110:
@@ -483,12 +481,12 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						} else if i == 0 {
 							exportPackets.RecNav = append(exportPackets.RecNav, models.NavRecord{})
 						}
-						eg.log.Debug("Разбор подзаписи EGTS_SR_LIQUID_LEVEL_SENSOR")
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_LIQUID_LEVEL_SENSOR")
 						ind := (subRecData.FlagLiq & 7)
 						offset := 1 << ind
 						exportPackets.RecNav[k].LiquidSensors.FlagLiqNum = exportPackets.RecNav[k].LiquidSensors.FlagLiqNum | uint8(offset)
 						exportPackets.RecNav[k].LiquidSensors.Value[ind] = subRecData.LiquidLevelSensorData
-						eg.log.Debug("Разбор подзаписи EGTS_SR_LIQUID_LEVEL_SENSOR N", ind, " TID: ", client, "Lev", subRecData.LiquidLevelSensorData)
+						eg.logger.Debug("Разбор подзаписи EGTS_SR_LIQUID_LEVEL_SENSOR N", ind, " TID: ", client, "Lev", subRecData.LiquidLevelSensorData)
 					}
 				}
 
@@ -497,12 +495,13 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 
 					_, err := eg.nc.Nc.Request(eg.nc.Topic, []byte(js), 2000*time.Millisecond)
 					if err != nil {
-						eg.log.Info("Nats error send: ", err.Error())
+						eg.logger.Errorf("Nats error send:  %s", err.Error())
 						if eg.nc.Nc != nil {
 							eg.nc.Nc.Close()
 						}
 						return
 					}
+					eg.logger.Info("Отправка данных в NATS: ", string(js))
 					if len(exportPackets.RecNav) > 0 {
 						eg.clientsMu.Lock()
 						if client, exists := eg.clients[clientID]; exists {
@@ -518,19 +517,19 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 
 			resp, err := createPtResponse(pkg.PacketIdentifier, resultCode, serviceType, srResponsesRecord)
 			if err != nil {
-				eg.log.WithField("err", err).Error("Ошибка сборки ответа")
+				eg.logger.WithField("err", err).Error("Ошибка сборки ответа")
 				goto Received
 			}
 			_, _ = local.Write(resp)
 
-			eg.log.WithField("packet", resp).Debug("Отправлен пакет EGTS_PT_RESPONSE")
+			eg.logger.WithField("packet", resp).Debug("Отправлен пакет EGTS_PT_RESPONSE")
 
 			if len(srResultCodePkg) > 0 {
 				_, _ = local.Write(srResultCodePkg)
-				eg.log.WithField("packet", resp).Debug("Отправлен пакет EGTS_SR_RESULT_CODE")
+				eg.logger.WithField("packet", resp).Debug("Отправлен пакет EGTS_SR_RESULT_CODE")
 			}
 		case EGTS_PT_RESPONSE:
-			eg.log.Debug("Тип пакета EGTS_PT_RESPONSE")
+			eg.logger.Debug("Тип пакета EGTS_PT_RESPONSE")
 		}
 	}
 

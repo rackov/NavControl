@@ -165,6 +165,17 @@ func Default() *Logger {
 	return defaultLogger
 }
 
+type Filter struct {
+	Level     string
+	StartDate int64
+	EndDate   int64
+	Limit     int32
+	IdSrv     int32
+	Port      int32
+	Protocol  string
+	PosEnd    bool
+}
+
 // ReadLogs читает логи с применением фильтров
 func (l *Logger) ReadLogs(level string, startDate, endDate int64, limit int32) ([]string, error) {
 	// Открываем файл логов

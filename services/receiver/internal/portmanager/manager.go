@@ -55,8 +55,7 @@ func NewPortManager(cfg *config.ControlResiver) *PortManager {
 		fmt.Println(err)
 	}
 	return &PortManager{
-		ports: make(map[int32]*PortInfo),
-		// dataChan: make(chan models.NavRecord, 100),
+		ports:  make(map[int32]*PortInfo),
 		ctx:    ctx,
 		cancel: cancel,
 		logger: log,
@@ -242,9 +241,19 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 	var protocolInstance protocol.NavigationProtocol
 	switch protocolName {
 	case "Arnavi":
-		protocolInstance = arnavi.NewArnaviProtocol(pm.logger)
+		logparsing := pm.logger.WithFields(map[string]interface{}{
+			"port":     req.PortReceiver,
+			"protocol": protocolName,
+			"id_srv":   req.IdReceiver,
+		})
+		protocolInstance = arnavi.NewArnaviProtocol(logparsing)
 	case "EGTS":
-		protocolInstance = egts.NewEgtsProtocol(pm.logger)
+		logparsing := pm.logger.WithFields(map[string]interface{}{
+			"port":     req.PortReceiver,
+			"protocol": protocolName,
+			"id_srv":   req.IdReceiver,
+		})
+		protocolInstance = egts.NewEgtsProtocol(logparsing)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", protocolName)
 	}
@@ -345,10 +354,20 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 	var protocolInstance protocol.NavigationProtocol
 	switch portInfo.Protocol {
 	case "Arnavi":
-		arnaviProto := arnavi.NewArnaviProtocol(pm.logger)
+		logparsing := pm.logger.WithFields(map[string]interface{}{
+			"port":     portInfo.PortNumber,
+			"protocol": portInfo.Protocol,
+			"id_srv":   portInfo.IdReceiver,
+		})
+		arnaviProto := arnavi.NewArnaviProtocol(logparsing)
 		protocolInstance = arnaviProto
 	case "EGTS":
-		protocolInstance = egts.NewEgtsProtocol(pm.logger)
+		logparsing := pm.logger.WithFields(map[string]interface{}{
+			"port":     portInfo.PortNumber,
+			"protocol": portInfo.Protocol,
+			"id_srv":   portInfo.IdReceiver,
+		})
+		protocolInstance = egts.NewEgtsProtocol(logparsing)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", portInfo.Protocol)
 	}

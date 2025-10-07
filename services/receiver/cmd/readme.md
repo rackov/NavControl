@@ -84,7 +84,7 @@ grpcurl -plaintext -d '{
   "start_date": 0,
   "end_date": 0,
   "limit": 5
-}' localhost:50051 proto.LoggingControl/ReadLogs
+}' localhost:50000 proto.ServiceInfo/ReadLogs
 
 grpcurl -plaintext -d '{
   "level": "INFO",

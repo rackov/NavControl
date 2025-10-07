@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
 	"github.com/sirupsen/logrus"
@@ -60,17 +59,16 @@ type ArnaviProtocol struct {
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
 
-	logger        *logger.Logger
+	logger        *logrus.Entry
 	conn          net.Conn
 	authorization bool
-	log           *logrus.Entry
 	id            int // номер принятого пакета, если пакет отправлен то =0
 	ImeiId        uint64
 	nc            models.NatsConf
 }
 
 // NewArnaviProtocol создает новый экземпляр протокола Arnavi
-func NewArnaviProtocol(log *logger.Logger) protocol.NavigationProtocol {
+func NewArnaviProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &ArnaviProtocol{
 		ctx:         ctx,
@@ -237,7 +235,7 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, nc mod
 
 	a.conn = conn
 	a.authorization = false
-	a.log = logcl
+	a.logger = logcl
 	a.nc = nc
 	a.process_connection(clientID)
 
@@ -267,18 +265,18 @@ func (sc *ArnaviProtocol) process_connection(clientID string) {
 			break
 		}
 		if n > 0 {
-			sc.log.Debugf("dump:\n%s", hex.Dump(readBuf[:n]))
+			sc.logger.Debugf("dump:\n%s", hex.Dump(readBuf[:n]))
 			localBuffer.Write(readBuf[:n])
 
 			err = sc.processExistingData(localBuffer, clientID)
 
 			if err != nil {
-				sc.log.Infof("ошибка %v", err)
+				sc.logger.Infof("ошибка %v", err)
 				break
 			}
 		}
 	}
-	sc.log.Infof("Disconnected from %s\n error: %v", local_info, err)
+	sc.logger.Infof("Disconnected from %s\n error: %v", local_info, err)
 
 }
 func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID string) error {
@@ -313,7 +311,7 @@ func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID strin
 				return fmt.Errorf(" %v", err)
 			}
 			data.Next(1)
-			sc.log.Debugf("отправлен  пакет подтверждения № %d", sc.id)
+			sc.logger.Debugf("отправлен  пакет подтверждения № %d", sc.id)
 			sc.id = 0
 			continue
 		}
@@ -357,17 +355,17 @@ func (sc *ArnaviProtocol) Authorization(data *bytes.Buffer) error {
 		}
 		data.Next(SizeAuth + 8)
 		sc.authorization = true
-		sc.log.Debugf("Принят расширенный пакет авторизации Id|Imei: %d ", headOne.IdImei)
+		sc.logger.Debugf("Принят расширенный пакет авторизации Id|Imei: %d ", headOne.IdImei)
 
 		return err
 	}
 	sc.ImeiId = headOne.IdImei
-	sc.log = sc.log.WithField("imei_id", sc.ImeiId)
-	sc.log.Debug("Принят пакет авторизации ")
+	sc.logger = sc.logger.WithField("imei_id", sc.ImeiId)
+	sc.logger.Debug("Принят пакет авторизации ")
 
 	_, err = sc.conn.Write(AnswerHeader())
 	if err != nil {
-		sc.log.Errorf("ошибка отправки %v", err)
+		sc.logger.Errorf("ошибка отправки %v", err)
 	}
 	data.Next(SizeAuth)
 	sc.authorization = true
@@ -415,8 +413,8 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		record.RecNav[0].LiquidSensors.FlagLiqNum = 255
 		record.RecNav[0].LiquidSensors.Value = pack.LL
 
-		sc.log.Debugf(" %d получен пакет время: %s \n { time:%d, lat: %d, lon: %d }\n"+
-			"course %d, speed %f, Satellites %X :, GPS %d, Glonass %d  LL: %v \n DATA: %v",
+		sc.logger.Infof(" %d получен пакет время: %s  { time:%d, lat: %d, lon: %d } "+
+			"course %d, speed %f, Satellites %X :, GPS %d, Glonass %d  LL: %v  DATA: %v",
 			sc.ImeiId,
 			formattedTime, packets.TimePacket,
 			pack.Latitude, pack.Longitude,
@@ -425,14 +423,14 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 			pack.Data)
 
 	default:
-		sc.log.Infof("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
+		sc.logger.Infof("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
 		return fmt.Errorf("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
 	}
 	js, _ := json.Marshal(record)
 
 	_, err = sc.nc.Nc.Request(sc.nc.Topic, []byte(js), 2000*time.Millisecond)
 	if err != nil {
-		sc.log.Errorf("Nats error send: %v", err.Error())
+		sc.logger.Errorf("Nats error send: %v", err.Error())
 		if sc.nc.Nc != nil {
 			sc.nc.Nc.Close()
 		}
