@@ -106,6 +106,7 @@ type Clients struct {
 	LastTime     int    `json:"last_time"`
 	CountPackets int    `json:"count_packets"`
 	IdInfo       IdInfo `json:"number_device"`
+	Multiple     bool   `json:"multiple"`
 }
 
 type WriterModule struct {

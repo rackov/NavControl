@@ -60,7 +60,7 @@ message PortDefinition {
     string protocol = 8;     // Протокол receiver (EGTS, Arnavi, NDTP)
     string status = 11;     // Статус receiver
     string description = 12; // Описание receiver
-    int32 connections_count=13; // Количество подключенных клиентов    
+    int32 connections_count=13; // Количество подключенных клиентов  
 }
 
 // Ответ на запрос списка портов
@@ -99,6 +99,7 @@ message ClientInfo {
   int32 id_receiver=7;
   int64 count_packets=9;
   IdInfo device=8;
+  bool multiple = 10;  
 }
 
 message GetClientsResponse {

@@ -50,6 +50,7 @@ type ClientInfo struct {
 	LastTime     int32
 	Device       IdInfo
 	CountPackets int64
+	Multiple     bool
 }
 
 // EgtsProtocol реализует интерфейс NavigationProtocol для протокола Arnavi
@@ -501,17 +502,22 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						}
 						return
 					}
-					eg.logger.Info("Отправка данных в NATS: ", string(js))
-					if len(exportPackets.RecNav) > 0 {
-						eg.clientsMu.Lock()
-						if client, exists := eg.clients[clientID]; exists {
-							client.LastTime = int32(time.Now().Unix())
+					eg.logger.Info("Данные: ", string(js))
+					l := len(exportPackets.RecNav)
+
+					eg.clientsMu.Lock()
+					if client, exists := eg.clients[clientID]; exists {
+						client.LastTime = int32(time.Now().Unix())
+						client.Multiple = false
+						if l == 1 {
 							client.Device = IdInfo{Tid: int32(exportPackets.RecNav[0].Client), Imei: exportPackets.RecNav[0].Imei}
-							client.CountPackets++
-							eg.clients[clientID] = client
+							client.Multiple = true
 						}
-						eg.clientsMu.Unlock()
+						client.CountPackets++
+
+						eg.clients[clientID] = client
 					}
+					eg.clientsMu.Unlock()
 				}
 			}
 

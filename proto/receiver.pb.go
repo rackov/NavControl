@@ -503,6 +503,7 @@ type ClientInfo struct {
 	IdReceiver    int32                  `protobuf:"varint,7,opt,name=id_receiver,json=idReceiver,proto3" json:"id_receiver,omitempty"`
 	CountPackets  int64                  `protobuf:"varint,9,opt,name=count_packets,json=countPackets,proto3" json:"count_packets,omitempty"`
 	Device        *IdInfo                `protobuf:"bytes,8,opt,name=device,proto3" json:"device,omitempty"`
+	Multiple      bool                   `protobuf:"varint,10,opt,name=multiple,proto3" json:"multiple,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -598,6 +599,13 @@ func (x *ClientInfo) GetDevice() *IdInfo {
 		return x.Device
 	}
 	return nil
+}
+
+func (x *ClientInfo) GetMultiple() bool {
+	if x != nil {
+		return x.Multiple
+	}
+	return false
 }
 
 type GetClientsResponse struct {
@@ -851,7 +859,7 @@ const file_receiver_proto_rawDesc = "" +
 	"\rport_receiver\x18\x02 \x01(\x05R\fportReceiver\".\n" +
 	"\x06IdInfo\x12\x10\n" +
 	"\x03tid\x18\x01 \x01(\x05R\x03tid\x12\x12\n" +
-	"\x04imei\x18\x02 \x01(\tR\x04imei\"\xad\x02\n" +
+	"\x04imei\x18\x02 \x01(\tR\x04imei\"\xc9\x02\n" +
 	"\n" +
 	"ClientInfo\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
@@ -863,7 +871,9 @@ const file_receiver_proto_rawDesc = "" +
 	"\vid_receiver\x18\a \x01(\x05R\n" +
 	"idReceiver\x12#\n" +
 	"\rcount_packets\x18\t \x01(\x03R\fcountPackets\x12%\n" +
-	"\x06device\x18\b \x01(\v2\r.proto.IdInfoR\x06device\"A\n" +
+	"\x06device\x18\b \x01(\v2\r.proto.IdInfoR\x06device\x12\x1a\n" +
+	"\bmultiple\x18\n" +
+	" \x01(\bR\bmultiple\"A\n" +
 	"\x12GetClientsResponse\x12+\n" +
 	"\aclients\x18\x01 \x03(\v2\x11.proto.ClientInfoR\aclients\"\x82\x01\n" +
 	"\x17DisconnectClientRequest\x12#\n" +

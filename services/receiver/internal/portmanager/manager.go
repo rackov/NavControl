@@ -522,6 +522,7 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					PortReceiver: portInfo.PortReceiver,
 					IdReceiver:   portInfo.IdReceiver,
 					CountPackets: client.CountPackets,
+					Multiple:     client.Multiple,
 					Device: &proto.IdInfo{
 						Imei: client.Device.Imei,
 						Tid:  client.Device.Tid,
@@ -542,6 +543,7 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					PortReceiver: portInfo.PortReceiver,
 					IdReceiver:   portInfo.IdReceiver,
 					CountPackets: client.CountPackets,
+					Multiple:     client.Multiple,
 					Device: &proto.IdInfo{
 						Imei: client.Device.Imei,
 						Tid:  client.Device.Tid,
@@ -570,6 +572,7 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					PortReceiver: portInfo.PortReceiver,
 					IdReceiver:   portInfo.IdReceiver,
 					CountPackets: client.CountPackets,
+					Multiple:     client.Multiple,
 					Device: &proto.IdInfo{
 						Imei: client.Device.Imei,
 						Tid:  client.Device.Tid,
@@ -589,6 +592,7 @@ func (pm *PortManager) GetConnectedClients(portNumber int32) ([]*proto.ClientInf
 					PortReceiver: portInfo.PortReceiver,
 					IdReceiver:   portInfo.IdReceiver,
 					CountPackets: client.CountPackets,
+					Multiple:     client.Multiple,
 					Device: &proto.IdInfo{
 						Imei: client.Device.Imei,
 						Tid:  client.Device.Tid,

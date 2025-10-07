@@ -153,6 +153,7 @@ func (h *Handler) ListAllClients(ctx context.Context) (conClients []models.Clien
 				ConnectTime:  int(r.ConnectTime),
 				LastTime:     int(r.LastTime),
 				CountPackets: int(r.CountPackets),
+				Multiple:     r.Multiple,
 			}
 
 			// Проверяем, что Device не nil перед обращением к его полям
@@ -259,6 +260,7 @@ func (h *Handler) GetConnectedClients(c *gin.Context) {
 			ConnectTime:  int(r.ConnectTime),
 			LastTime:     int(r.LastTime),
 			CountPackets: int(r.CountPackets),
+			Multiple:     r.Multiple,
 		}
 
 		// Проверяем, что Device не nil перед обращением к его полям

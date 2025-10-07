@@ -47,6 +47,7 @@ type ClientInfo struct {
 	LastTime     int32
 	Device       IdInfo
 	CountPackets int64
+	Multiple     bool
 }
 
 // ArnaviProtocol реализует интерфейс NavigationProtocol для протокола Arnavi
@@ -399,8 +400,7 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		PacketType: 2,
 		RecNav:     make([]models.NavRecord, 1),
 	}
-	unixTime := time.Unix(int64(packets.TimePacket), 0)
-	formattedTime := unixTime.Format("2006-01-02 15:04:05")
+
 	switch pack := packets.Data.(type) {
 	case *TagsData:
 		record.RecNav[0].Imei = strconv.FormatUint(sc.ImeiId, 10)
@@ -412,15 +412,6 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		record.RecNav[0].ReceivedTimestamp = uint32(time.Now().Unix())
 		record.RecNav[0].LiquidSensors.FlagLiqNum = 255
 		record.RecNav[0].LiquidSensors.Value = pack.LL
-
-		sc.logger.Infof(" %d получен пакет время: %s  { time:%d, lat: %d, lon: %d } "+
-			"course %d, speed %f, Satellites %X :, GPS %d, Glonass %d  LL: %v  DATA: %v",
-			sc.ImeiId,
-			formattedTime, packets.TimePacket,
-			pack.Latitude, pack.Longitude,
-			pack.Course, pack.Speed, pack.Satellites, pack.Satellites&0xf, (pack.Satellites>>4)&0xf,
-			pack.LL,
-			pack.Data)
 
 	default:
 		sc.logger.Infof("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
@@ -436,11 +427,14 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		}
 		return err
 	}
+	sc.logger.Info("Данные: ", string(js))
+
 	sc.clientsMu.Lock()
 	if client, exists := sc.clients[clientID]; exists {
 		client.LastTime = int32(time.Now().Unix())
 		client.Device = IdInfo{Tid: 0, Imei: record.RecNav[0].Imei}
 		client.CountPackets++
+		client.Multiple = false
 		sc.clients[clientID] = client
 	}
 	sc.clientsMu.Unlock()
