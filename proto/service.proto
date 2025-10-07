@@ -59,6 +59,22 @@ message ServiceManager {
     string error_msg = 13;
 }
 
+
+// Ответ с текущим уровнем логирования
+message LogLevelResponse {
+  string level = 1;
+  bool success = 2;
+  string message = 3;
+}
+// Эти сообщения теперь общие и могут использоваться в других .proto файлах
+message SetLogLevelRequest {
+  string level = 1; // debug, info, warn, error, fatal, panic
+}
+
+message SetLogLevelResponse {
+  bool success = 1;
+}
+
 // Уровни логирования
 enum LogLevel {
   DEBUG = 0;
@@ -74,20 +90,6 @@ enum ServiceManagerType {
   RECEIVER =0;
   WRITER = 1;
   RETRANSLATOR =2;
-}
-// Ответ с текущим уровнем логирования
-message LogLevelResponse {
-  string level = 1;
-  bool success = 2;
-  string message = 3;
-}
-// Эти сообщения теперь общие и могут использоваться в других .proto файлах
-message SetLogLevelRequest {
-  string level = 1; // debug, info, warn, error, fatal, panic
-}
-
-message SetLogLevelResponse {
-  bool success = 1;
 }
 
 
@@ -110,6 +112,14 @@ message ReadLogsRequest {
   // Максимальное количество строк для возврата.
   // Если не указан или 0, возвращаются все найденные строки (осторожно с большими файлами).
   int32 limit = 4;
+
+  int32 id_service = 5;
+
+  string protocol=6;
+
+  int32 port=7;
+
+  bool pos_end=8;
 }
 
 // Ответ с прочитанными логами

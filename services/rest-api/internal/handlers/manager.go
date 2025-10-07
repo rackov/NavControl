@@ -201,6 +201,29 @@ func (h *Handler) ReadLogs(c *gin.Context) {
 		readLogsReq.Limit = int32(limit)
 	}
 
+	// Добавляем обработку параметров IdService, Port и Protocol
+	if idServiceStr := c.Query("id_srv"); idServiceStr != "" {
+		idService, err := strconv.ParseInt(idServiceStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid id_srv parameter"})
+			return
+		}
+		readLogsReq.IdService = int32(idService)
+	}
+
+	if portStr := c.Query("port"); portStr != "" {
+		port, err := strconv.ParseInt(portStr, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid port parameter"})
+			return
+		}
+		readLogsReq.Port = int32(port)
+	}
+
+	if protocol := c.Query("protocol"); protocol != "" {
+		readLogsReq.Protocol = protocol
+	}
+
 	// Вызываем gRPC метод для чтения логов
 	response, err := client.ReadLogs(c.Request.Context(), readLogsReq)
 	if err != nil {

@@ -612,7 +612,11 @@ type ReadLogsRequest struct {
 	EndDate int64 `protobuf:"varint,3,opt,name=end_date,json=endDate,proto3" json:"end_date,omitempty"`
 	// Максимальное количество строк для возврата.
 	// Если не указан или 0, возвращаются все найденные строки (осторожно с большими файлами).
-	Limit         int32 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	Limit         int32  `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
+	IdService     int32  `protobuf:"varint,5,opt,name=id_service,json=idService,proto3" json:"id_service,omitempty"`
+	Protocol      string `protobuf:"bytes,6,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Port          int32  `protobuf:"varint,7,opt,name=port,proto3" json:"port,omitempty"`
+	PosEnd        bool   `protobuf:"varint,8,opt,name=pos_end,json=posEnd,proto3" json:"pos_end,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -673,6 +677,34 @@ func (x *ReadLogsRequest) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *ReadLogsRequest) GetIdService() int32 {
+	if x != nil {
+		return x.IdService
+	}
+	return 0
+}
+
+func (x *ReadLogsRequest) GetProtocol() string {
+	if x != nil {
+		return x.Protocol
+	}
+	return ""
+}
+
+func (x *ReadLogsRequest) GetPort() int32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *ReadLogsRequest) GetPosEnd() bool {
+	if x != nil {
+		return x.PosEnd
+	}
+	return false
 }
 
 // Ответ с прочитанными логами
@@ -786,13 +818,18 @@ const file_service_proto_rawDesc = "" +
 	"\x12SetLogLevelRequest\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\"/\n" +
 	"\x13SetLogLevelResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"w\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xdf\x01\n" +
 	"\x0fReadLogsRequest\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1d\n" +
 	"\n" +
 	"start_date\x18\x02 \x01(\x03R\tstartDate\x12\x19\n" +
 	"\bend_date\x18\x03 \x01(\x03R\aendDate\x12\x14\n" +
-	"\x05limit\x18\x04 \x01(\x05R\x05limit\"c\n" +
+	"\x05limit\x18\x04 \x01(\x05R\x05limit\x12\x1d\n" +
+	"\n" +
+	"id_service\x18\x05 \x01(\x05R\tidService\x12\x1a\n" +
+	"\bprotocol\x18\x06 \x01(\tR\bprotocol\x12\x12\n" +
+	"\x04port\x18\a \x01(\x05R\x04port\x12\x17\n" +
+	"\apos_end\x18\b \x01(\bR\x06posEnd\"c\n" +
 	"\x10ReadLogsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1b\n" +

@@ -21,11 +21,13 @@ import (
 
 // LogEntry представляет одну запись в логе
 type LogEntry struct {
-	File    string    `json:"file"`
-	Level   string    `json:"level"`
-	Message string    `json:"msg"`
-	Time    time.Time `json:"time"`
-	// Другие поля, которые могут быть в логе
+	File     string    `json:"file"`
+	Level    string    `json:"level"`
+	Message  string    `json:"msg"`
+	Time     time.Time `json:"time"`
+	IdSrv    int32     `json:"id_srv,omitempty"`   // Добавлено поле для ID сервиса
+	Port     int32     `json:"port,omitempty"`     // Добавлено поле для порта
+	Protocol string    `json:"protocol,omitempty"` // Добавлено поле для протокола
 }
 
 // UnmarshalJSON кастомный метод для парсинга JSON с нестандартным форматом времени
@@ -170,14 +172,14 @@ type Filter struct {
 	StartDate int64
 	EndDate   int64
 	Limit     int32
-	IdSrv     int32
+	IdService int32
 	Port      int32
 	Protocol  string
 	PosEnd    bool
 }
 
 // ReadLogs читает логи с применением фильтров
-func (l *Logger) ReadLogs(level string, startDate, endDate int64, limit int32) ([]string, error) {
+func (l *Logger) ReadLogs(f Filter) ([]string, error) {
 	// Открываем файл логов
 	file, err := os.Open(l.logPath)
 	if err != nil {
@@ -190,11 +192,11 @@ func (l *Logger) ReadLogs(level string, startDate, endDate int64, limit int32) (
 
 	// Преобразуем timestamp в time.Time
 	var startTime, endTime time.Time
-	if startDate != 0 {
-		startTime = time.Unix(startDate, 0)
+	if f.StartDate != 0 {
+		startTime = time.Unix(f.StartDate, 0)
 	}
-	if endDate != 0 {
-		endTime = time.Unix(endDate, 0)
+	if f.EndDate != 0 {
+		endTime = time.Unix(f.EndDate, 0)
 	}
 
 	// Создаем сканер для чтения файла
@@ -210,7 +212,22 @@ func (l *Logger) ReadLogs(level string, startDate, endDate int64, limit int32) (
 		}
 
 		// Фильтр по уровню
-		if level != "" && !strings.EqualFold(entry.Level, level) {
+		if f.Level != "" && !strings.EqualFold(entry.Level, f.Level) {
+			continue
+		}
+
+		// Фильтр по IdSrv
+		if f.IdService > 0 && entry.IdSrv != f.IdService {
+			continue
+		}
+
+		// Фильтр по Port
+		if f.Port > 0 && entry.Port != f.Port {
+			continue
+		}
+
+		// Фильтр по Protocol
+		if f.Protocol != "" && !strings.EqualFold(entry.Protocol, f.Protocol) {
 			continue
 		}
 
@@ -229,7 +246,7 @@ func (l *Logger) ReadLogs(level string, startDate, endDate int64, limit int32) (
 		count++
 
 		// Проверяем лимит
-		if limit > 0 && count >= limit {
+		if f.Limit > 0 && count >= f.Limit {
 			break
 		}
 	}
