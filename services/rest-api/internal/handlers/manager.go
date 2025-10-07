@@ -208,7 +208,7 @@ func (h *Handler) ReadLogs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusOK, response.LogLines)
 }
 
 // GetServiceModules возвращает список всех сервисов
