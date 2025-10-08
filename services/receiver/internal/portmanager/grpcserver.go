@@ -278,6 +278,7 @@ func (s *GRPCServer) ReadLogs(ctx context.Context, req *proto.ReadLogsRequest) (
 		Protocol:  req.Protocol,
 		Port:      req.Port,
 		PosEnd:    req.PosEnd,
+		Msg:       req.Msg,
 	}
 	logs, err := s.logger.ReadLogs(logReq)
 	if err != nil {

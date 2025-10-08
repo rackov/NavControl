@@ -120,6 +120,8 @@ message ReadLogsRequest {
   int32 port=7;
 
   bool pos_end=8;
+
+  string msg=9;
 }
 
 // Ответ с прочитанными логами

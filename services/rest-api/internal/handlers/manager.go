@@ -201,6 +201,14 @@ func (h *Handler) ReadLogs(c *gin.Context) {
 		readLogsReq.Limit = int32(limit)
 	}
 
+	if msg := c.Query("msg"); msg != "" {
+		readLogsReq.Msg = msg
+	}
+
+	if posEnd := c.Query("pos_end"); posEnd != "" {
+		readLogsReq.PosEnd = true
+	}
+
 	// Добавляем обработку параметров IdService, Port и Protocol
 	if idServiceStr := c.Query("id_srv"); idServiceStr != "" {
 		idService, err := strconv.ParseInt(idServiceStr, 10, 32)

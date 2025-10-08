@@ -617,6 +617,7 @@ type ReadLogsRequest struct {
 	Protocol      string `protobuf:"bytes,6,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	Port          int32  `protobuf:"varint,7,opt,name=port,proto3" json:"port,omitempty"`
 	PosEnd        bool   `protobuf:"varint,8,opt,name=pos_end,json=posEnd,proto3" json:"pos_end,omitempty"`
+	Msg           string `protobuf:"bytes,9,opt,name=msg,proto3" json:"msg,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -705,6 +706,13 @@ func (x *ReadLogsRequest) GetPosEnd() bool {
 		return x.PosEnd
 	}
 	return false
+}
+
+func (x *ReadLogsRequest) GetMsg() string {
+	if x != nil {
+		return x.Msg
+	}
+	return ""
 }
 
 // Ответ с прочитанными логами
@@ -818,7 +826,7 @@ const file_service_proto_rawDesc = "" +
 	"\x12SetLogLevelRequest\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\"/\n" +
 	"\x13SetLogLevelResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xdf\x01\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\"\xf1\x01\n" +
 	"\x0fReadLogsRequest\x12\x14\n" +
 	"\x05level\x18\x01 \x01(\tR\x05level\x12\x1d\n" +
 	"\n" +
@@ -829,7 +837,8 @@ const file_service_proto_rawDesc = "" +
 	"id_service\x18\x05 \x01(\x05R\tidService\x12\x1a\n" +
 	"\bprotocol\x18\x06 \x01(\tR\bprotocol\x12\x12\n" +
 	"\x04port\x18\a \x01(\x05R\x04port\x12\x17\n" +
-	"\apos_end\x18\b \x01(\bR\x06posEnd\"c\n" +
+	"\apos_end\x18\b \x01(\bR\x06posEnd\x12\x10\n" +
+	"\x03msg\x18\t \x01(\tR\x03msg\"c\n" +
 	"\x10ReadLogsResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1b\n" +

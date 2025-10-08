@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -28,7 +29,6 @@ type LogEntry struct {
 	IdSrv    int32     `json:"id_srv,omitempty"`   // Добавлено поле для ID сервиса
 	Port     int32     `json:"port,omitempty"`     // Добавлено поле для порта
 	Protocol string    `json:"protocol,omitempty"` // Добавлено поле для протокола
-	Msg      string    `json:"msg,omitempty"`
 }
 
 // UnmarshalJSON кастомный метод для парсинга JSON с нестандартным форматом времени
@@ -177,10 +177,15 @@ type Filter struct {
 	Port      int32
 	Protocol  string
 	PosEnd    bool
+	Msg       string
 }
 
 // ReadLogs читает логи с применением фильтров
 func (l *Logger) ReadLogs(f Filter) ([]string, error) {
+	if f.PosEnd {
+		return l.ReadLogsReverse(f)
+	}
+
 	// Открываем файл логов
 	file, err := os.Open(l.logPath)
 	if err != nil {
@@ -242,6 +247,33 @@ func (l *Logger) ReadLogs(f Filter) ([]string, error) {
 			continue
 		}
 
+		// Фильтр по сообщению
+		if f.Msg != "" {
+			if f.Msg == "*" {
+				// "*" matches any text - no additional check needed
+			} else if strings.Contains(f.Msg, "*") {
+				// Handle pattern with "*" (matches any sequence of characters)
+				pattern := strings.ReplaceAll(f.Msg, "*", ".*")
+				pattern = "^" + pattern + "$"
+				matched, err := regexp.MatchString(pattern, entry.Message)
+				if err != nil || !matched {
+					continue
+				}
+			} else if strings.Contains(f.Msg, "?") {
+				// Handle pattern with "?" (matches exactly one character)
+				pattern := strings.ReplaceAll(f.Msg, "?", ".")
+				matched, err := filepath.Match(pattern, entry.Message)
+				if err != nil || !matched {
+					continue
+				}
+			} else {
+				// Exact match
+				if entry.Message != f.Msg {
+					continue
+				}
+			}
+		}
+
 		// Добавляем строку в результат
 		result = append(result, line)
 		count++
@@ -255,6 +287,172 @@ func (l *Logger) ReadLogs(f Filter) ([]string, error) {
 	// Проверяем ошибки сканирования
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+
+	return result, nil
+}
+
+// ReadLogsReverse читает логи в обратном порядке с применением фильтров
+func (l *Logger) ReadLogsReverse(f Filter) ([]string, error) {
+	// Открываем файл логов
+	file, err := os.Open(l.logPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// Получаем информацию о файле
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	// Получаем размер файла
+	fileSize := fileInfo.Size()
+
+	// Если файл пустой, возвращаем пустой результат
+	if fileSize == 0 {
+		return []string{}, nil
+	}
+
+	var result []string
+	var count int32
+
+	// Преобразуем timestamp в time.Time
+	var startTime, endTime time.Time
+	if f.StartDate != 0 {
+		startTime = time.Unix(f.StartDate, 0)
+	}
+	if f.EndDate != 0 {
+		endTime = time.Unix(f.EndDate, 0)
+	}
+
+	// Используем буфер для чтения с конца файла
+	const bufSize = 4096
+	buf := make([]byte, bufSize)
+	
+	// Начинаем с конца файла
+	pos := fileSize
+	var lines []string
+	
+	// Читаем файл блоками с конца
+	for pos > 0 && (f.Limit == 0 || int32(len(lines)) < f.Limit*2) {
+		// Определяем размер следующего блока для чтения
+		readSize := bufSize
+		if pos < int64(bufSize) {
+			readSize = int(pos)
+		}
+		
+		// Смещаем позицию чтения
+		pos -= int64(readSize)
+		
+		// Читаем блок
+		_, err := file.ReadAt(buf[:readSize], pos)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		
+		// Разбираем блок на строки
+		block := string(buf[:readSize])
+		blockLines := strings.Split(block, "\n")
+		
+		// Если у нас уже есть строки, объединяем первую строку блока с последней строкой предыдущего
+		if len(lines) > 0 && len(blockLines) > 0 {
+			if !strings.HasSuffix(block, "\n") {
+				// Это значит, что первая строка блока является продолжением последней строки из предыдущих блоков
+				lines[len(lines)-1] += blockLines[0]
+				blockLines = blockLines[1:]
+			}
+		}
+		
+		// Добавляем новые строки в начало слайса (так как читаем с конца)
+		lines = append(blockLines, lines...)
+	}
+	
+	// Удаляем первую пустую строку, если она есть (может появиться из-за завершающего \n)
+	if len(lines) > 0 && lines[0] == "" {
+		lines = lines[1:]
+	}
+	
+	// Обрабатываем строки с конца (так как файл читался с конца)
+	for i := len(lines) - 1; i >= 0; i-- {
+		entryLine := lines[i]
+		if entryLine == "" {
+			continue
+		}
+
+		// Парсим JSON строку
+		var entry LogEntry
+		if err := json.Unmarshal([]byte(entryLine), &entry); err != nil {
+			// Если не удалось распарсить как JSON, пропускаем строку
+			continue
+		}
+
+		// Фильтр по уровню
+		if f.Level != "" && !strings.EqualFold(entry.Level, f.Level) {
+			continue
+		}
+
+		// Фильтр по IdSrv
+		if f.IdService > 0 && entry.IdSrv != f.IdService {
+			continue
+		}
+
+		// Фильтр по Port
+		if f.Port > 0 && entry.Port != f.Port {
+			continue
+		}
+
+		// Фильтр по Protocol
+		if f.Protocol != "" && !strings.EqualFold(entry.Protocol, f.Protocol) {
+			continue
+		}
+
+		// Фильтр по начальной дате
+		if !startTime.IsZero() && entry.Time.Before(startTime) {
+			continue
+		}
+
+		// Фильтр по конечной дате
+		if !endTime.IsZero() && entry.Time.After(endTime) {
+			continue
+		}
+
+		// Фильтр по сообщению
+		if f.Msg != "" {
+			if f.Msg == "*" {
+				// "*" matches any text - no additional check needed
+			} else if strings.Contains(f.Msg, "*") {
+				// Handle pattern with "*" (matches any sequence of characters)
+				pattern := strings.ReplaceAll(f.Msg, "*", ".*")
+				pattern = "^" + pattern + "$"
+				matched, err := regexp.MatchString(pattern, entry.Message)
+				if err != nil || !matched {
+					continue
+				}
+			} else if strings.Contains(f.Msg, "?") {
+				// Handle pattern with "?" (matches exactly one character)
+				pattern := strings.ReplaceAll(f.Msg, "?", ".")
+				matched, err := filepath.Match(pattern, entry.Message)
+				if err != nil || !matched {
+					continue
+				}
+			} else {
+				// Exact match
+				if entry.Message != f.Msg {
+					continue
+				}
+			}
+		}
+
+		// Добавляем строку в результат
+		result = append(result, entryLine)
+		count++
+
+		// Проверяем лимит
+		if f.Limit > 0 && count >= f.Limit {
+			break
+		}
 	}
 
 	return result, nil
