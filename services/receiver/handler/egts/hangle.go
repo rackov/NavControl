@@ -67,18 +67,65 @@ type EgtsProtocol struct {
 	conn      net.Conn
 	isPkgSave bool
 	nc        models.NatsConf
+	natsQueue chan []byte
+	natsDone  chan struct{}
 }
 
 // NewEgtsProtocol создает новый экземпляр протокола Arnavi
 func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &EgtsProtocol{
+	ep := &EgtsProtocol{
 		ctx:         ctx,
 		cancel:      cancel,
 		clients:     make(map[string]ClientInfo),
 		connections: make(map[net.Conn]struct{}),
 		logger:      log,
+		natsQueue:   make(chan []byte, 100), // Буфер на 100 сообщений
+		natsDone:    make(chan struct{}),
 	}
+
+	// обработчик очереди NATS
+	go ep.processNatsQueue()
+
+	return ep
+}
+
+// метод обработки очереди NATS
+func (eg *EgtsProtocol) processNatsQueue() {
+	defer close(eg.natsDone)
+
+	for {
+		select {
+		case msg := <-eg.natsQueue:
+			// Попытка отправить сообщение с повторными попытками
+			err := eg.sendToNatsWithRetry(msg)
+			if err != nil {
+				eg.logger.Errorf("Failed to send message to NATS: %v", err)
+				// Здесь можно реализовать сохранение в файл или другую стратегию
+			}
+		case <-eg.ctx.Done():
+			return
+		}
+	}
+}
+
+// Функция с повторными попытками отправки в NATS
+func (eg *EgtsProtocol) sendToNatsWithRetry(msg []byte) error {
+	var err error
+	maxRetries := 3
+	retryDelay := 500 * time.Millisecond
+
+	for i := 0; i < maxRetries; i++ {
+		_, err = eg.nc.Nc.Request(eg.nc.Topic, msg, 2000*time.Millisecond)
+		if err == nil {
+			return nil
+		}
+		eg.logger.Warnf("NATS send attempt %d failed: %v", i+1, err)
+		if i < maxRetries-1 {
+			time.Sleep(retryDelay)
+		}
+	}
+	return err
 }
 
 // GetName возвращает имя протокола
@@ -236,7 +283,7 @@ func (a *EgtsProtocol) handleConnection(conn net.Conn, clientID string, nc model
 	// парсинг данных из протокола Arnavi
 
 	a.conn = conn
-	a.isPkgSave = true
+	a.isPkgSave = false
 	a.logger = logcl
 	a.nc = nc
 
@@ -494,15 +541,16 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 				if eg.isPkgSave {
 					js, _ := json.Marshal(exportPackets)
 
-					_, err := eg.nc.Nc.Request(eg.nc.Topic, []byte(js), 2000*time.Millisecond)
-					if err != nil {
-						eg.logger.Errorf("Nats error send:  %s", err.Error())
-						if eg.nc.Nc != nil {
-							eg.nc.Nc.Close()
-						}
-						return
+					// Асинхронная отправка через очередь
+					select {
+					case eg.natsQueue <- js:
+						eg.logger.Debug("Message queued for NATS")
+					default:
+						eg.logger.Warn("NATS queue is full, dropping message")
+						// Можно реализовать альтернативную стратегию, например сохранение в файл
 					}
-					eg.logger.Info("Данные: ", string(js))
+					eg.logger.Info("Данные подготовлены: ", string(js))
+
 					l := len(exportPackets.RecNav)
 
 					eg.clientsMu.Lock()

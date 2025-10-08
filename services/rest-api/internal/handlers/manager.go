@@ -230,8 +230,12 @@ func (h *Handler) ReadLogs(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if response.LogLines == nil {
+		c.JSON(http.StatusOK, []string{})
+	} else {
+		c.JSON(http.StatusOK, response.LogLines)
+	}
 
-	c.JSON(http.StatusOK, response.LogLines)
 }
 
 // GetServiceModules возвращает список всех сервисов

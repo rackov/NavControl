@@ -28,6 +28,7 @@ type LogEntry struct {
 	IdSrv    int32     `json:"id_srv,omitempty"`   // Добавлено поле для ID сервиса
 	Port     int32     `json:"port,omitempty"`     // Добавлено поле для порта
 	Protocol string    `json:"protocol,omitempty"` // Добавлено поле для протокола
+	Msg      string    `json:"msg,omitempty"`
 }
 
 // UnmarshalJSON кастомный метод для парсинга JSON с нестандартным форматом времени
