@@ -21,12 +21,14 @@ func restMan(router *gin.Engine, h *handlers.Handler) {
 		controller.GET("/sm/log", h.ReadLogs)
 		controller.GET("/sm", h.GetServiceModules)
 		controller.POST("/sm", h.CreateServiceModule)
+		controller.PUT("/sm", h.UpdateServiceModule)
 		controller.DELETE("/sm/:id_sm", h.DeleteServiceModule)
 		controller.GET("/sm/protocol", h.GetProtocols)
 		// Receiver
 		controller.GET("/receiver", h.ListAllReceiver)
 		controller.GET("/receiver/:id_sm", h.ListPorts)
 		controller.POST("/receiver", h.AddPort)
+		controller.PUT("/receiver", h.ChangePortDescription)
 		controller.PATCH("/receiver/:id_sm/:id_rec", h.ChangeActive) // ClosePort, OpenPort
 		controller.DELETE("/receiver/:id_sm/:id_rec", h.DeletePort)
 		controller.GET("/receiver/client", h.GetConnectedClients)

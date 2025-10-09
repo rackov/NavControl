@@ -126,6 +126,24 @@ func (s *GRPCServer) DisconnectClient(ctx context.Context, req *proto.Disconnect
 	}, nil
 }
 
+// Изменить описание порта
+func (s *GRPCServer) ChangePortDescription(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
+	var err error
+
+	s.pm.ChangePortDescription(req)
+	if err = s.pm.SaveConfigPort("edit", req); err != nil {
+		return &proto.PortOperationResponse{
+			Success: false,
+			Message: "Error saving port configuration",
+		}, err
+	}
+	return &proto.PortOperationResponse{
+		Success:     true,
+		Message:     "Port description changed successfully",
+		PortDetails: req,
+	}, nil
+}
+
 // OpenPort открывает (активирует) порт
 func (s *GRPCServer) OpenPort(ctx context.Context, req *proto.PortDefinition) (*proto.PortOperationResponse, error) {
 	err := s.pm.StartPort(req.PortReceiver)

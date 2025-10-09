@@ -886,7 +886,7 @@ const file_receiver_proto_rawDesc = "" +
 	"\x15PortOperationResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x128\n" +
-	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\xc1\x05\n" +
+	"\fport_details\x18\x03 \x01(\v2\x15.proto.PortDefinitionR\vportDetails2\x8f\x06\n" +
 	"\x0fReceiverControl\x12L\n" +
 	"\x19GetActiveConnectionsCount\x12\x18.proto.GetClientsRequest\x1a\x15.proto.GetActiveCount\x12=\n" +
 	"\tListPorts\x12\x16.google.protobuf.Empty\x1a\x18.proto.ListPortsResponse\x12@\n" +
@@ -895,7 +895,8 @@ const file_receiver_proto_rawDesc = "" +
 	"\x10DisconnectClient\x12\x1e.proto.DisconnectClientRequest\x1a\x1f.proto.DisconnectClientResponse\x12?\n" +
 	"\bOpenPort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12@\n" +
 	"\tClosePort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12>\n" +
-	"\aAddPort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12A\n" +
+	"\aAddPort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12L\n" +
+	"\x15ChangePortDescription\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x12A\n" +
 	"\n" +
 	"DeletePort\x12\x15.proto.PortDefinition\x1a\x1c.proto.PortOperationResponse\x128\n" +
 	"\fGetProtocols\x12\x16.google.protobuf.Empty\x1a\x10.proto.ProtocolsB\x12Z\x10NavControl/protob\x06proto3"
@@ -943,20 +944,22 @@ var file_receiver_proto_depIdxs = []int32{
 	2,  // 10: proto.ReceiverControl.OpenPort:input_type -> proto.PortDefinition
 	2,  // 11: proto.ReceiverControl.ClosePort:input_type -> proto.PortDefinition
 	2,  // 12: proto.ReceiverControl.AddPort:input_type -> proto.PortDefinition
-	2,  // 13: proto.ReceiverControl.DeletePort:input_type -> proto.PortDefinition
-	13, // 14: proto.ReceiverControl.GetProtocols:input_type -> google.protobuf.Empty
-	1,  // 15: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
-	3,  // 16: proto.ReceiverControl.ListPorts:output_type -> proto.ListPortsResponse
-	2,  // 17: proto.ReceiverControl.GetPortStatus:output_type -> proto.PortDefinition
-	9,  // 18: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
-	11, // 19: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
-	12, // 20: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
-	12, // 21: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
-	12, // 22: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
-	12, // 23: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
-	0,  // 24: proto.ReceiverControl.GetProtocols:output_type -> proto.Protocols
-	15, // [15:25] is the sub-list for method output_type
-	5,  // [5:15] is the sub-list for method input_type
+	2,  // 13: proto.ReceiverControl.ChangePortDescription:input_type -> proto.PortDefinition
+	2,  // 14: proto.ReceiverControl.DeletePort:input_type -> proto.PortDefinition
+	13, // 15: proto.ReceiverControl.GetProtocols:input_type -> google.protobuf.Empty
+	1,  // 16: proto.ReceiverControl.GetActiveConnectionsCount:output_type -> proto.GetActiveCount
+	3,  // 17: proto.ReceiverControl.ListPorts:output_type -> proto.ListPortsResponse
+	2,  // 18: proto.ReceiverControl.GetPortStatus:output_type -> proto.PortDefinition
+	9,  // 19: proto.ReceiverControl.GetConnectedClients:output_type -> proto.GetClientsResponse
+	11, // 20: proto.ReceiverControl.DisconnectClient:output_type -> proto.DisconnectClientResponse
+	12, // 21: proto.ReceiverControl.OpenPort:output_type -> proto.PortOperationResponse
+	12, // 22: proto.ReceiverControl.ClosePort:output_type -> proto.PortOperationResponse
+	12, // 23: proto.ReceiverControl.AddPort:output_type -> proto.PortOperationResponse
+	12, // 24: proto.ReceiverControl.ChangePortDescription:output_type -> proto.PortOperationResponse
+	12, // 25: proto.ReceiverControl.DeletePort:output_type -> proto.PortOperationResponse
+	0,  // 26: proto.ReceiverControl.GetProtocols:output_type -> proto.Protocols
+	16, // [16:27] is the sub-list for method output_type
+	5,  // [5:16] is the sub-list for method input_type
 	5,  // [5:5] is the sub-list for extension type_name
 	5,  // [5:5] is the sub-list for extension extendee
 	0,  // [0:5] is the sub-list for field type_name

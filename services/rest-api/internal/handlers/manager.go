@@ -323,9 +323,67 @@ func (h *Handler) checkIpPort(ip string, port int) error {
 	return nil
 }
 
+func (h *Handler) UpdateServiceModule(c *gin.Context) {
+	errUse := models.UsesMsgError{}
+	// Определяем структуру для входных данных
+	var req config.ServiceManager
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Errorf("Failed to bind request JSON: %v", err)
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+
+	if req.TypeSm != "RECEIVER" && req.TypeSm != "WRITER" && req.TypeSm != "RETRANSLATOR" {
+		h.logger.Errorf("Invalid service type: %s", req.TypeSm)
+		errUse.ErrorMsg = fmt.Sprintf("Invalid service type: %s", req.TypeSm)
+		errUse.ErrorTitle = "Тип сервиса некорректен или не зарегистрирован"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+	client, exists := h.services[req.IdSm]
+	if !exists {
+		h.logger.Errorf("Service not found: %s", req.TypeSm)
+		errUse.ErrorMsg = fmt.Sprintf("Service not found: %d", req.IdSm)
+		errUse.ErrorTitle = "Сервис не найден"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+	_, err := client.SetLogLevel(c.Request.Context(), req.LogLevel)
+	if err != nil {
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не устновить уровень логирования"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+	err = h.cfg.SaveCfg()
+	if err != nil {
+		h.logger.Errorf("Невозможно сохранить конфигурацию: %v", err)
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Невозможно сохранить конфигурацию: "
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+	idind := h.findId(req.IdSm)
+
+	h.cfg.ServiceList[idind].Description = req.Description
+	h.cfg.ServiceList[idind].Name = req.Name
+	h.cfg.ServiceList[idind].LogLevel = req.LogLevel
+
+	// Возвращаем успешный ответ
+	c.JSON(http.StatusOK, req)
+
+}
+
 // создание сервиса через POST
 func (h *Handler) CreateServiceModule(c *gin.Context) {
-	h.logger.Info("Received request to create a new service")
 
 	errUse := models.UsesMsgError{}
 	// Определяем структуру для входных данных

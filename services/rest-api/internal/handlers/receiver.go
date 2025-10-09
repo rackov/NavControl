@@ -341,6 +341,60 @@ func (h *Handler) DisconnectClient(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response)
 }
+func (h *Handler) ChangePortDescription(c *gin.Context) {
+	var req proto.PortDefinition
+	errUse := models.UsesMsgError{}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+
+	id := int(req.IdSm)
+	client, exists := h.services[id]
+	if !exists {
+		errUse.ErrorMsg = "Service not found"
+		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
+		errUse.HttpCode = http.StatusNotFound
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+
+	// Проверяем соединение и получаем клиент
+	manager, err := client.GetServiceManager(c.Request.Context())
+	if err != nil {
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка доступа к методу  сервиса"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+
+	// Проверяем, что сервис является RECEIVER
+	if manager.TypeSm != "RECEIVER" {
+		errUse.ErrorMsg = "Service is not a RECEIVER"
+		errUse.ErrorTitle = "Ошибка типа  сервиса"
+		errUse.HttpCode = http.StatusBadRequest
+		c.JSON(errUse.HttpCode, errUse)
+
+		return
+	}
+
+	response, err := client.ReceiverClient().ChangePortDescription(context.Background(), &req)
+
+	if err != nil {
+		errUse.ErrorMsg = err.Error()
+		errUse.ErrorTitle = "Ошибка изменения порта"
+		errUse.HttpCode = http.StatusInternalServerError
+		c.JSON(errUse.HttpCode, errUse)
+		return
+	}
+	c.JSON(http.StatusOK, response.PortDetails)
+
+}
 
 // AddPort добавляет новый порт в конфигурацию
 func (h *Handler) AddPort(c *gin.Context) {

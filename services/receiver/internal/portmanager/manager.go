@@ -182,6 +182,17 @@ func portInfoToProto(portInfo *PortInfo) *proto.PortDefinition {
 	}
 }
 
+// Изменить описание порта
+func (pm *PortManager) ChangePortDescription(req *proto.PortDefinition) (*proto.PortDefinition, error) {
+	pm.mu.RLock()
+	defer pm.mu.RUnlock()
+	pm.ports[req.PortReceiver].Description = req.Description
+	pm.ports[req.PortReceiver].Name = req.Name
+
+	return portInfoToProto(pm.ports[req.PortReceiver]), nil
+
+}
+
 // Получить статус порта
 func (pm *PortManager) GetPortStatus(portNumber int32) (*proto.PortDefinition, error) {
 	pm.mu.RLock()

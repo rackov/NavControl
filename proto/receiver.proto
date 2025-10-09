@@ -36,6 +36,9 @@ service ReceiverControl {
   // Добавить новый порт в конфигурацию 
   rpc AddPort(PortDefinition) returns (PortOperationResponse);
 
+  // Изменить описание порта
+  rpc ChangePortDescription(PortDefinition) returns (PortOperationResponse);
+
   // Удалить порт из конфигурации
   rpc DeletePort(PortDefinition) returns (PortOperationResponse);
 
@@ -117,9 +120,6 @@ message DisconnectClientResponse {
   string message = 2; // Описание результата или ошибки
 }
 
-// message PortIdentifier {
-//  int32 port_receiver = 1; // номер порта
-// }
 
 message PortOperationResponse {
   bool success = 1;
