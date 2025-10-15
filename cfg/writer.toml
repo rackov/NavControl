@@ -1,14 +1,16 @@
 id_sm = 1
 description = "Сервис записи навигационных данных в БД"
 name = "NavData Writer Service"
-grpc_port = 9090
+grpc_port = 5053
 metric_port = 9091
-nats_address = "nats://localhost:4222"
+nats_address = "nats://192.168.194.242:4222"
 nats_topic = "navigation.data"
+size_buf =10000
+is_jetstream=false
 
 [log_config]
 log_level = "info"
-log_file = "/log/writer.log"
+log_file_path = "logs/writer.log"
 max_size = 100
 max_age = 30
 max_backups = 10
@@ -17,20 +19,20 @@ max_backups = 10
 description = "Основная база данных PostgreSQL"
 name = "PostgreSQL Writer"
 id_writer = 1
-ip_db = "127.0.0.1"
+ip_db = "192.168.194.242"
 port_db = 5432
-name_db = "navdata"
-login = "navuser"
-passw_db = "navpass"
-table_db = "navigation_points"
+name_db = "navigation"
+login = "navadmin"
+passw_db = "n1a2v3Ad$$"
+table_db = "one.temp"
 
-[[writers]]
-description = "Резервная база данных"
-name = "Backup MySQL Writer"
-id_writer = 2
-ip_db = "127.0.0.2"
-port_db = 3306
-name_db = "navbackup"
-login = "backupuser"
-passw_db = "backuppass"
-table_db = "positions"
+# [[writers]]
+# description = "Резервная база данных"
+# name = "Backup MySQL Writer"
+# id_writer = 2
+# ip_db = "127.0.0.2"
+# port_db = 3306
+# name_db = "navbackup"
+# login = "backupuser"
+# passw_db = "backuppass"
+# table_db = "positions"

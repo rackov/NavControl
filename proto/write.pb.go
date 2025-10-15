@@ -39,6 +39,7 @@ type WriteService struct {
 	Status        string                 `protobuf:"bytes,9,opt,name=status,proto3" json:"status,omitempty"`
 	Name          string                 `protobuf:"bytes,10,opt,name=name,proto3" json:"name,omitempty"`
 	IsActive      bool                   `protobuf:"varint,11,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	Description   string                 `protobuf:"bytes,12,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -150,6 +151,13 @@ func (x *WriteService) GetIsActive() bool {
 	return false
 }
 
+func (x *WriteService) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 type RetWrite struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ListWrite     []*WriteService        `protobuf:"bytes,1,rep,name=list_write,json=listWrite,proto3" json:"list_write,omitempty"`
@@ -194,50 +202,6 @@ func (x *RetWrite) GetListWrite() []*WriteService {
 	return nil
 }
 
-type StateServ struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StateServ) Reset() {
-	*x = StateServ{}
-	mi := &file_write_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StateServ) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StateServ) ProtoMessage() {}
-
-func (x *StateServ) ProtoReflect() protoreflect.Message {
-	mi := &file_write_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StateServ.ProtoReflect.Descriptor instead.
-func (*StateServ) Descriptor() ([]byte, []int) {
-	return file_write_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *StateServ) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
 type SetWrite struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	IdWriter      int32                  `protobuf:"varint,1,opt,name=id_writer,json=idWriter,proto3" json:"id_writer,omitempty"`
@@ -248,7 +212,7 @@ type SetWrite struct {
 
 func (x *SetWrite) Reset() {
 	*x = SetWrite{}
-	mi := &file_write_proto_msgTypes[3]
+	mi := &file_write_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -260,7 +224,7 @@ func (x *SetWrite) String() string {
 func (*SetWrite) ProtoMessage() {}
 
 func (x *SetWrite) ProtoReflect() protoreflect.Message {
-	mi := &file_write_proto_msgTypes[3]
+	mi := &file_write_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -273,7 +237,7 @@ func (x *SetWrite) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetWrite.ProtoReflect.Descriptor instead.
 func (*SetWrite) Descriptor() ([]byte, []int) {
-	return file_write_proto_rawDescGZIP(), []int{3}
+	return file_write_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SetWrite) GetIdWriter() int32 {
@@ -294,7 +258,7 @@ var File_write_proto protoreflect.FileDescriptor
 
 const file_write_proto_rawDesc = "" +
 	"\n" +
-	"\vwrite.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\x97\x02\n" +
+	"\vwrite.proto\x12\x05proto\x1a\x1bgoogle/protobuf/empty.proto\"\xb9\x02\n" +
 	"\fWriteService\x12\x1b\n" +
 	"\tid_writer\x18\x01 \x01(\x05R\bidWriter\x12\x13\n" +
 	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm\x12\x13\n" +
@@ -307,22 +271,21 @@ const file_write_proto_rawDesc = "" +
 	"\x06status\x18\t \x01(\tR\x06status\x12\x12\n" +
 	"\x04name\x18\n" +
 	" \x01(\tR\x04name\x12\x1b\n" +
-	"\tis_active\x18\v \x01(\bR\bisActive\">\n" +
+	"\tis_active\x18\v \x01(\bR\bisActive\x12 \n" +
+	"\vdescription\x18\f \x01(\tR\vdescription\">\n" +
 	"\bRetWrite\x122\n" +
 	"\n" +
-	"list_write\x18\x01 \x03(\v2\x13.proto.WriteServiceR\tlistWrite\"%\n" +
-	"\tStateServ\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"<\n" +
+	"list_write\x18\x01 \x03(\v2\x13.proto.WriteServiceR\tlistWrite\"<\n" +
 	"\bSetWrite\x12\x1b\n" +
 	"\tid_writer\x18\x01 \x01(\x05R\bidWriter\x12\x13\n" +
-	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm2\x8c\x02\n" +
+	"\x05id_sm\x18\x02 \x01(\x05R\x04idSm2\x98\x02\n" +
 	"\fWriteControl\x125\n" +
 	"\n" +
-	"ListWrites\x12\x16.google.protobuf.Empty\x1a\x0f.proto.RetWrite\x121\n" +
-	"\bAddWrite\x12\x13.proto.WriteService\x1a\x10.proto.StateServ\x124\n" +
-	"\vDeleteWrite\x12\x13.proto.WriteService\x1a\x10.proto.StateServ\x12.\n" +
-	"\tDownWrite\x12\x0f.proto.SetWrite\x1a\x10.proto.StateServ\x12,\n" +
-	"\aUpWrite\x12\x0f.proto.SetWrite\x1a\x10.proto.StateServB\x12Z\x10NavControl/protob\x06proto3"
+	"ListWrites\x12\x16.google.protobuf.Empty\x1a\x0f.proto.RetWrite\x124\n" +
+	"\bAddWrite\x12\x13.proto.WriteService\x1a\x13.proto.WriteService\x127\n" +
+	"\vDeleteWrite\x12\x13.proto.WriteService\x1a\x13.proto.WriteService\x121\n" +
+	"\tDownWrite\x12\x0f.proto.SetWrite\x1a\x13.proto.WriteService\x12/\n" +
+	"\aUpWrite\x12\x0f.proto.SetWrite\x1a\x13.proto.WriteServiceB\x12Z\x10NavControl/protob\x06proto3"
 
 var (
 	file_write_proto_rawDescOnce sync.Once
@@ -336,26 +299,25 @@ func file_write_proto_rawDescGZIP() []byte {
 	return file_write_proto_rawDescData
 }
 
-var file_write_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_write_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_write_proto_goTypes = []any{
 	(*WriteService)(nil), // 0: proto.WriteService
 	(*RetWrite)(nil),     // 1: proto.RetWrite
-	(*StateServ)(nil),    // 2: proto.StateServ
-	(*SetWrite)(nil),     // 3: proto.SetWrite
-	(*empty.Empty)(nil),  // 4: google.protobuf.Empty
+	(*SetWrite)(nil),     // 2: proto.SetWrite
+	(*empty.Empty)(nil),  // 3: google.protobuf.Empty
 }
 var file_write_proto_depIdxs = []int32{
 	0, // 0: proto.RetWrite.list_write:type_name -> proto.WriteService
-	4, // 1: proto.WriteControl.ListWrites:input_type -> google.protobuf.Empty
+	3, // 1: proto.WriteControl.ListWrites:input_type -> google.protobuf.Empty
 	0, // 2: proto.WriteControl.AddWrite:input_type -> proto.WriteService
 	0, // 3: proto.WriteControl.DeleteWrite:input_type -> proto.WriteService
-	3, // 4: proto.WriteControl.DownWrite:input_type -> proto.SetWrite
-	3, // 5: proto.WriteControl.UpWrite:input_type -> proto.SetWrite
+	2, // 4: proto.WriteControl.DownWrite:input_type -> proto.SetWrite
+	2, // 5: proto.WriteControl.UpWrite:input_type -> proto.SetWrite
 	1, // 6: proto.WriteControl.ListWrites:output_type -> proto.RetWrite
-	2, // 7: proto.WriteControl.AddWrite:output_type -> proto.StateServ
-	2, // 8: proto.WriteControl.DeleteWrite:output_type -> proto.StateServ
-	2, // 9: proto.WriteControl.DownWrite:output_type -> proto.StateServ
-	2, // 10: proto.WriteControl.UpWrite:output_type -> proto.StateServ
+	0, // 7: proto.WriteControl.AddWrite:output_type -> proto.WriteService
+	0, // 8: proto.WriteControl.DeleteWrite:output_type -> proto.WriteService
+	0, // 9: proto.WriteControl.DownWrite:output_type -> proto.WriteService
+	0, // 10: proto.WriteControl.UpWrite:output_type -> proto.WriteService
 	6, // [6:11] is the sub-list for method output_type
 	1, // [1:6] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -374,7 +336,7 @@ func file_write_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_write_proto_rawDesc), len(file_write_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -581,7 +581,7 @@ func (h *Handler) GetPortNumberByID(id int32, client *restgrpc.Client) (*proto.P
 	}
 
 	if portDefinition == nil {
-		return nil, errors.New("Port not found")
+		return nil, errors.New("port not found")
 	}
 	return portDefinition, nil
 }

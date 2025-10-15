@@ -63,29 +63,34 @@ type EgtsProtocol struct {
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
 	logger      *logrus.Entry
-	// Egts клиент
-	conn      net.Conn
-	isPkgSave bool
+
 	nc        models.NatsConf
 	natsQueue chan []byte
 	natsDone  chan struct{}
+
+	//  таймер для проверки активности клиентов
+	inactivityTimeout time.Duration
 }
 
 // NewEgtsProtocol создает новый экземпляр протокола Arnavi
 func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
 	ep := &EgtsProtocol{
-		ctx:         ctx,
-		cancel:      cancel,
-		clients:     make(map[string]ClientInfo),
-		connections: make(map[net.Conn]struct{}),
-		logger:      log,
-		natsQueue:   make(chan []byte, 100), // Буфер на 100 сообщений
-		natsDone:    make(chan struct{}),
+		ctx:               ctx,
+		cancel:            cancel,
+		clients:           make(map[string]ClientInfo),
+		connections:       make(map[net.Conn]struct{}),
+		logger:            log,
+		natsQueue:         make(chan []byte, 100), // Буфер на 100 сообщений
+		natsDone:          make(chan struct{}),
+		inactivityTimeout: 3 * time.Minute, // Таймаут неактивности
 	}
 
 	// обработчик очереди NATS
 	go ep.processNatsQueue()
+
+	// Запуск проверки неактивных клиентов
+	go ep.checkInactiveClients()
 
 	return ep
 }
@@ -282,23 +287,47 @@ func (a *EgtsProtocol) handleConnection(conn net.Conn, clientID string, nc model
 
 	// парсинг данных из протокола Arnavi
 
-	a.conn = conn
-	a.isPkgSave = false
 	a.logger = logcl
 	a.nc = nc
 
-	a.process_connection(clientID)
+	a.process_connection(clientID, conn)
 
 }
 
-// type ConClient struct {
-// 	conn      net.Conn
-// 	isPkgSave bool
-// 	nc        models.NatsConf
-// 	log       *logrus.Entry
-// }
+// метод для проверки неактивных клиентов
+func (eg *EgtsProtocol) checkInactiveClients() {
+	ticker := time.NewTicker(1 * time.Minute) // Проверяем каждую минуту
+	defer ticker.Stop()
 
-func (eg *EgtsProtocol) process_connection(clientID string) {
+	for {
+		select {
+		case <-eg.ctx.Done():
+			return
+		case <-ticker.C:
+			now := time.Now().Unix()
+			eg.clientsMu.Lock()
+
+			// Создаем список неактивных клиентов для отключения
+			var inactiveClients []string
+			for clientID, client := range eg.clients {
+				// Если прошло больше 3 минут с момента последней активности
+				if (now - int64(client.LastTime)) > int64(eg.inactivityTimeout.Seconds()) {
+					inactiveClients = append(inactiveClients, clientID)
+				}
+			}
+
+			eg.clientsMu.Unlock()
+
+			// Отключаем неактивных клиентов
+			for _, clientID := range inactiveClients {
+				eg.DisconnectClient(clientID)
+				eg.logger.WithField("client", clientID).Info("Client disconnected due to inactivity")
+			}
+		}
+	}
+}
+
+func (eg *EgtsProtocol) process_connection(clientID string, conn net.Conn) {
 
 	var (
 		srResultCodePkg   []byte
@@ -307,7 +336,7 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 		recvPacket        []byte
 		client            uint32
 	)
-	local := eg.conn
+	local := conn
 	sttl := 1 * time.Second
 	connTimer := time.NewTimer(sttl)
 
@@ -326,6 +355,14 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 
 		switch err {
 		case nil:
+			// Обновляем время последней активности клиента при получении данных
+			// eg.clientsMu.Lock()
+			// if clientInfo, exists := eg.clients[clientID]; exists {
+			// 	clientInfo.LastTime = int32(time.Now().Unix())
+			// 	eg.clients[clientID] = clientInfo
+			// }
+			// eg.clientsMu.Unlock()
+
 			connTimer.Reset(sttl)
 
 			// если пакет не егтс формата закрываем соединение
@@ -537,10 +574,10 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						eg.logger.Debug("Разбор подзаписи EGTS_SR_LIQUID_LEVEL_SENSOR N", ind, " TID: ", client, "Lev", subRecData.LiquidLevelSensorData)
 					}
 				}
+				isPkgSave := true
 
-				if eg.isPkgSave {
-					js, _ := json.Marshal(exportPackets)
-
+				js, _ := json.Marshal(exportPackets)
+				if isPkgSave {
 					// Асинхронная отправка через очередь
 					select {
 					case eg.natsQueue <- js:
@@ -549,24 +586,24 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 						eg.logger.Warn("NATS queue is full, dropping message")
 						// Можно реализовать альтернативную стратегию, например сохранение в файл
 					}
-					eg.logger.Info("Данные подготовлены: ", string(js))
 
-					l := len(exportPackets.RecNav)
-
-					eg.clientsMu.Lock()
-					if client, exists := eg.clients[clientID]; exists {
-						client.LastTime = int32(time.Now().Unix())
-						client.Multiple = false
-						if l == 1 {
-							client.Device = IdInfo{Tid: int32(exportPackets.RecNav[0].Client), Imei: exportPackets.RecNav[0].Imei}
-							client.Multiple = true
-						}
-						client.CountPackets++
-
-						eg.clients[clientID] = client
-					}
-					eg.clientsMu.Unlock()
 				}
+				l := len(exportPackets.RecNav)
+				eg.logger.Debug("Данные подготовлены: ", string(js))
+				eg.clientsMu.Lock()
+				if client, exists := eg.clients[clientID]; exists {
+					client.LastTime = int32(time.Now().Unix())
+					client.Multiple = true
+					if l == 1 {
+						client.Device = IdInfo{Tid: int32(exportPackets.RecNav[0].Client), Imei: exportPackets.RecNav[0].Imei}
+						client.Multiple = false
+					}
+					client.CountPackets++
+
+					eg.clients[clientID] = client
+				}
+				eg.clientsMu.Unlock()
+
 			}
 
 			resp, err := createPtResponse(pkg.PacketIdentifier, resultCode, serviceType, srResponsesRecord)
@@ -585,6 +622,15 @@ func (eg *EgtsProtocol) process_connection(clientID string) {
 		case EGTS_PT_RESPONSE:
 			eg.logger.Debug("Тип пакета EGTS_PT_RESPONSE")
 		}
+
+		// Обновляем время последней активности клиента после успешной обработки пакета
+		eg.clientsMu.Lock()
+		if clientInfo, exists := eg.clients[clientID]; exists {
+			clientInfo.LastTime = int32(time.Now().Unix())
+			eg.clients[clientID] = clientInfo
+		}
+		eg.clientsMu.Unlock()
+
 	}
 
 }

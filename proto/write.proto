@@ -11,10 +11,10 @@ import "google/protobuf/empty.proto";
 
 service WriteControl {
     rpc ListWrites(google.protobuf.Empty) returns (RetWrite);
-    rpc AddWrite(WriteService) returns(StateServ);
-    rpc DeleteWrite(WriteService) returns(StateServ);
-    rpc DownWrite(SetWrite) returns(StateServ);
-    rpc UpWrite(SetWrite) returns(StateServ);
+    rpc AddWrite(WriteService) returns(WriteService);
+    rpc DeleteWrite(WriteService) returns(WriteService);
+    rpc DownWrite(SetWrite) returns(WriteService);
+    rpc UpWrite(SetWrite) returns(WriteService);
 }    
 
 message WriteService {
@@ -29,13 +29,12 @@ message WriteService {
     string status=9;
     string name=10; 
     bool is_active=11;
+    string description=12;
 }
 message RetWrite{
     repeated WriteService list_write=1;
 }
-message StateServ{
-    string message=1;
-}
+
 message SetWrite {
     int32 id_writer=1;
     int32 id_sm=2; 

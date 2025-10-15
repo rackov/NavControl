@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/naoina/toml"
@@ -20,17 +21,18 @@ type Writer struct {
 
 // представляет  конфигурацию записи данных
 type ControlWriter struct {
-	IdSm        int    `toml:"id_sm"`
-	Description string `toml:"description"`
-	Name        string `toml:"name"`
-	GrpcPort    int    `toml:"grpc_port"`
-	MetricPort  int    `toml:"metric_port"`
-	NatsAddress string `toml:"nats_address"`
-	NatsTopic   string `toml:"nats_topic"`
-	// NatsTimeOut int       `toml:"nats_timeout"` // в секундах
-	LogConfig ConfigLog `toml:"log_config"`
-	Writers   []Writer  `toml:"writers"`
-	Filename  string    `toml:"-"`
+	IdSm          int       `toml:"id_sm"`
+	Description   string    `toml:"description"`
+	Name          string    `toml:"name"`
+	GrpcPort      int       `toml:"grpc_port"`
+	MetricPort    int       `toml:"metric_port"`
+	NatsAddress   string    `toml:"nats_address"`
+	NatsTopic     string    `toml:"nats_topic"`
+	LogConfig     ConfigLog `toml:"log_config"`
+	Writers       []Writer  `toml:"writers"`
+	SizeBuf       int       `toml:"size_buf"`
+	IsIsJetStream bool      `toml:"is_jetstream"`
+	Filename      string    `toml:"-"`
 }
 
 func NewWriter() *ControlWriter {
@@ -61,4 +63,14 @@ func (s *ControlWriter) SaveConfig() error {
 		return err
 	}
 	return err
+}
+
+func (s *ControlWriter) DeleteWriter(id int32) error {
+	for i, v := range s.Writers {
+		if v.IdWriter == id {
+			s.Writers = append(s.Writers[:i], s.Writers[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("write %d not found", id)
 }

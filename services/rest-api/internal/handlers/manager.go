@@ -316,7 +316,7 @@ func (h *Handler) checkIpPort(ip string, port int) error {
 		}
 		if (ipf == ips) && (rf.PortSm == port) {
 
-			return fmt.Errorf("The service already exists")
+			return fmt.Errorf("the service already exists")
 		}
 
 	}

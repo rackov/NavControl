@@ -9,9 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/proto"
-	"google.golang.org/protobuf/types/known/emptypb"
 
-	pb "github.com/rackov/NavControl/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (h *Handler) ListAllWriter(c *gin.Context) {
@@ -98,7 +97,7 @@ func (h *Handler) ListWriters(c *gin.Context) {
 func (h *Handler) AddWriter(c *gin.Context) {
 	errUse := models.UsesMsgError{}
 
-	var writeService pb.WriteService
+	var writeService proto.WriteService
 	if err := c.ShouldBindJSON(&writeService); err != nil {
 		errUse.ErrorMsg = "Invalid JSON format"
 		errUse.ErrorTitle = "Не удалось распознать запрос JSON"
@@ -197,7 +196,7 @@ func (h *Handler) DeleteWriter(c *gin.Context) {
 		return
 	}
 
-	writeService := &pb.WriteService{
+	writeService := &proto.WriteService{
 		IdWriter: int32(idWr),
 		IdSm:     int32(idSm),
 	}
@@ -264,7 +263,7 @@ func (h *Handler) ChangeActiveWr(c *gin.Context) {
 		return
 	}
 
-	setWrite := &pb.SetWrite{
+	setWrite := &proto.SetWrite{
 		IdWriter: int32(idWr),
 		IdSm:     int32(idSm),
 	}
@@ -299,7 +298,7 @@ func (h *Handler) ChangeActiveWr(c *gin.Context) {
 		return
 	}
 
-	var result *pb.StateServ
+	var result *proto.WriteService
 	if isActive {
 		result, err = client.WriterClient().DownWrite(context.Background(), setWrite)
 	} else {

@@ -8,7 +8,6 @@ import (
 	"github.com/rackov/NavControl/pkg/logger"
 	"github.com/rackov/NavControl/pkg/monitoring"
 	"github.com/rackov/NavControl/services/writer/internal/mgrpc"
-	"github.com/rackov/NavControl/services/writer/internal/wrdbnats"
 )
 
 func main() {
@@ -28,19 +27,18 @@ func main() {
 
 	}
 
-	hub := wrdbnats.NewHubServer(config, log)
-	go hub.Run()
-	hub.AddService()
-
 	// Запускаем сервер для сбора метрик
 	go func() {
 		if err := monitoring.StartMetricsServer(config.MetricPort); err != nil {
-			log.Printf("Failed to start metrics server: %v\n", err)
+			log.Infof("Failed to start metrics server: %v\n", err)
 		}
 	}()
-
+	log.Info("Start")
 	// Регистрируем наш сервис
-	grpcService := mgrpc.NewGRPCServer(hub)
+	grpcService, err := mgrpc.NewGRPCServer(config, log)
+	if err != nil {
+		log.Fatalf("Failed to create gRPC server: %v", err)
+	}
 
 	// Запускаем сервер gRPC
 	if err := grpcService.StartGRPCServer(config.GrpcPort); err != nil {
