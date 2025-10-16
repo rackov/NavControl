@@ -4,9 +4,9 @@ name = "NavData Writer Service"
 grpc_port = 5053
 metric_port = 9091
 nats_address = "nats://192.168.194.242:4222"
-nats_topic = "navigation.data"
+nats_topic = "navigation"
 size_buf =10000
-is_jetstream=false
+is_jetstream=true
 
 [log_config]
 log_level = "info"

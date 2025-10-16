@@ -264,7 +264,7 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 			"protocol": protocolName,
 			"id_srv":   req.IdReceiver,
 		})
-		protocolInstance = egts.NewEgtsProtocol(logparsing)
+		protocolInstance = egts.NewEgtsProtocol(logparsing, pm.cfg.IsJetStream)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", protocolName)
 	}
@@ -378,7 +378,7 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 			"protocol": portInfo.Protocol,
 			"id_srv":   portInfo.IdReceiver,
 		})
-		protocolInstance = egts.NewEgtsProtocol(logparsing)
+		protocolInstance = egts.NewEgtsProtocol(logparsing, pm.cfg.IsJetStream)
 	default:
 		return fmt.Errorf("unsupported protocol: %s", portInfo.Protocol)
 	}

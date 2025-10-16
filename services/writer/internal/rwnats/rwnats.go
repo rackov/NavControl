@@ -259,7 +259,7 @@ func (w *WrNatsServer) StartSubscription() error {
 
 	if w.IsJetStream {
 		// Создаем или используем существующий поток JetStream
-		streamName := fmt.Sprintf("STREAM_%d_%d", w.IdWriter, w.IdSm)
+		streamName := "NAV_STREAM" // fmt.Sprintf("STREAM_%d_%d", w.IdWriter, w.IdSm)
 		_, err = w.js.AddStream(&nats.StreamConfig{
 			Name:     streamName,
 			Subjects: []string{w.TopicBroker},
@@ -268,6 +268,14 @@ func (w *WrNatsServer) StartSubscription() error {
 			w.Log.Errorf("Failed to add JetStream stream: %v", err)
 			return err
 		}
+		consumer := "writer"
+		w.js.AddConsumer(streamName, &nats.ConsumerConfig{
+			Durable:        consumer,
+			DeliverSubject: consumer,
+			AckPolicy:      nats.AckExplicitPolicy,
+			Description:    consumer,
+			Name:           consumer,
+		})
 
 		// Подписываемся с помощью JetStream
 		w.sub, err = w.js.Subscribe(w.TopicBroker, func(msg *nats.Msg) {
@@ -276,9 +284,13 @@ func (w *WrNatsServer) StartSubscription() error {
 				return
 
 			}
+
 			w.handleMessage(string(msg.Data))
-			msg.Ack()
-		})
+			if err := msg.Ack(); err != nil {
+				w.Log.Errorf("Error ack message: %v", err)
+			}
+			w.Log.Debugf("Received message: %s", string(msg.Data))
+		}, nats.ManualAck(), nats.DeliverAll(), nats.Bind(streamName, consumer))
 	} else {
 		// Обычная подписка
 		w.sub, err = w.nc.Subscribe(w.TopicBroker, w.processMessage)
@@ -409,6 +421,16 @@ func (w *WrNatsServer) MonitorConnections() {
 			w.natsConnected = false
 			w.Log.Warn("NATS connection lost. Trying to reconnect...")
 			w.connectToNATS()
+			// После восстановления подключения перезапускаем подписку
+			if w.natsConnected {
+				w.Log.Info("NATS connection restored. Restarting subscription...")
+				err := w.StartSubscription()
+				if err != nil {
+					w.Log.Errorf("Failed to restart NATS subscription: %v", err)
+				} else {
+					w.Log.Info("NATS subscription restarted successfully")
+				}
+			}
 		}
 
 		// Проверяем подключение к PostgreSQL

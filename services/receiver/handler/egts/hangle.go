@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
@@ -64,16 +65,17 @@ type EgtsProtocol struct {
 	connMu      sync.Mutex
 	logger      *logrus.Entry
 
-	nc        models.NatsConf
-	natsQueue chan []byte
-	natsDone  chan struct{}
+	nc models.NatsConf
 
+	// Добавим поля для JetStream
+	js          jetstream.JetStream
+	isJetStream bool
 	//  таймер для проверки активности клиентов
 	inactivityTimeout time.Duration
 }
 
 // NewEgtsProtocol создает новый экземпляр протокола Arnavi
-func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
+func NewEgtsProtocol(log *logrus.Entry, isJetStream bool) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
 	ep := &EgtsProtocol{
 		ctx:               ctx,
@@ -81,13 +83,9 @@ func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 		clients:           make(map[string]ClientInfo),
 		connections:       make(map[net.Conn]struct{}),
 		logger:            log,
-		natsQueue:         make(chan []byte, 100), // Буфер на 100 сообщений
-		natsDone:          make(chan struct{}),
 		inactivityTimeout: 3 * time.Minute, // Таймаут неактивности
+		isJetStream:       isJetStream,
 	}
-
-	// обработчик очереди NATS
-	go ep.processNatsQueue()
 
 	// Запуск проверки неактивных клиентов
 	go ep.checkInactiveClients()
@@ -95,40 +93,20 @@ func NewEgtsProtocol(log *logrus.Entry) protocol.NavigationProtocol {
 	return ep
 }
 
-// метод обработки очереди NATS
-func (eg *EgtsProtocol) processNatsQueue() {
-	defer close(eg.natsDone)
-
-	for {
-		select {
-		case msg := <-eg.natsQueue:
-			// Попытка отправить сообщение с повторными попытками
-			err := eg.sendToNatsWithRetry(msg)
-			if err != nil {
-				eg.logger.Errorf("Failed to send message to NATS: %v", err)
-				// Здесь можно реализовать сохранение в файл или другую стратегию
-			}
-		case <-eg.ctx.Done():
-			return
-		}
-	}
-}
-
 // Функция с повторными попытками отправки в NATS
-func (eg *EgtsProtocol) sendToNatsWithRetry(msg []byte) error {
+func (eg *EgtsProtocol) sendToNats(msg []byte) error {
 	var err error
-	maxRetries := 3
-	retryDelay := 500 * time.Millisecond
 
-	for i := 0; i < maxRetries; i++ {
+	if eg.isJetStream {
+		// Используем JetStream для публикации
+		if eg.js == nil {
+			err = fmt.Errorf("jetStream не инициализирован")
+			return err
+		}
+
+		_, err = eg.js.Publish(eg.ctx, eg.nc.Topic, msg)
+	} else {
 		_, err = eg.nc.Nc.Request(eg.nc.Topic, msg, 2000*time.Millisecond)
-		if err == nil {
-			return nil
-		}
-		eg.logger.Warnf("NATS send attempt %d failed: %v", i+1, err)
-		if i < maxRetries-1 {
-			time.Sleep(retryDelay)
-		}
 	}
 	return err
 }
@@ -145,7 +123,33 @@ func (a *EgtsProtocol) Start(port int, nc models.NatsConf) error {
 	if err != nil {
 		return fmt.Errorf("failed to listen on port %d: %v", port, err)
 	}
+	a.nc = nc
 
+	// Инициализация JetStream если включено
+	if a.isJetStream {
+		js, err := jetstream.New(a.nc.Nc)
+		if err != nil {
+			a.logger.Errorf("Failed to initialize JetStream: %v", err)
+			return err
+		}
+		a.js = js
+
+		// Создание потока (stream) если он еще не существует
+		_, err = js.CreateOrUpdateStream(a.ctx, jetstream.StreamConfig{
+			Name:     "NAV_STREAM",
+			Subjects: []string{a.nc.Topic},
+			Storage:  jetstream.FileStorage,
+
+			// MaxConsumers: 1,
+		})
+
+		if err != nil {
+			a.logger.Errorf("Failed to create/update JetStream stream: %v", err)
+			return err
+		}
+
+		a.logger.Info("JetStream initialized successfully")
+	}
 	a.logger.Infof("%s protocol started on port %d", a.GetName(), port)
 
 	// Запускаем обработчик соединений в отдельной горутине
@@ -578,13 +582,10 @@ func (eg *EgtsProtocol) process_connection(clientID string, conn net.Conn) {
 
 				js, _ := json.Marshal(exportPackets)
 				if isPkgSave {
-					// Асинхронная отправка через очередь
-					select {
-					case eg.natsQueue <- js:
-						eg.logger.Debug("Message queued for NATS")
-					default:
-						eg.logger.Warn("NATS queue is full, dropping message")
-						// Можно реализовать альтернативную стратегию, например сохранение в файл
+					err := eg.sendToNats(js)
+					if err != nil {
+						eg.logger.Info("Nats error send: ", err.Error())
+						return
 					}
 
 				}

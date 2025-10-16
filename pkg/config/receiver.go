@@ -34,6 +34,7 @@ type ControlResiver struct {
 	NatsTopic   string     `toml:"nats_topic"`
 	NatsTimeOut int        `toml:"nats_timeout"` // в секундах
 	LogConfig   ConfigLog  `toml:"log_config"`
+	IsJetStream bool       `toml:"is_jetstream"`
 	Receivers   []Receiver `toml:"receivers"`
 	Filename    string     `toml:"-"`
 }

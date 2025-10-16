@@ -5,8 +5,9 @@ ip_sm = ""
 grpc_port = 50000
 metric_port = 9902
 nats_address = "nats://192.168.194.242:4222"
-nats_topic = "navigation.data"
+nats_topic = "navigation"
 nats_timeout = 5
+is_jetstream= true
 
 [log_config]
 log_level = "info"

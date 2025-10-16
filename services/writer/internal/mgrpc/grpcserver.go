@@ -93,7 +93,7 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 		if err := wrNats.Start(); err != nil {
 			s.logger.Errorf("Failed start Writer %d  err: %v", r.IdWriter, err)
 		}
-		s.logger.Debugf("Writer %v started", wrNats)
+		// s.logger.Debugf("Writer %v started", wrNats)
 	}
 
 	s.logger.Infof("gRPC server started on port %d", port)
