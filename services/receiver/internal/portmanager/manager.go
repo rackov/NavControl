@@ -93,7 +93,7 @@ func (pm *PortManager) Start() error {
 			default:
 				if pm.nc == nil || !pm.nc.IsConnected() {
 					pm.logger.Errorf("NATS connection lost, reconnecting...")
-					pm.reconect()
+					pm.reconnect()
 				}
 				time.Sleep(time.Duration(pm.cfg.NatsTimeOut) * time.Second)
 
@@ -115,7 +115,7 @@ func cfgToProto(cfg config.Receiver) *proto.PortDefinition {
 	req.Status = cfg.Status
 	return &req
 }
-func (pm *PortManager) reconect() {
+func (pm *PortManager) reconnect() {
 	pm.muCfg.Lock()
 	for i, r := range pm.cfg.Receivers {
 		if r.Active {
@@ -125,11 +125,25 @@ func (pm *PortManager) reconect() {
 	}
 	pm.muCfg.Unlock()
 
-	nc, err := nats.Connect(pm.cfg.NatsAddress)
-	if err != nil {
-		pm.logger.Errorf("Error connecting to NATS: %v", err)
-		return
+	// Попытка переподключения с экспоненциальной задержкой
+	var nc *nats.Conn
+	var err error
+	retryDelay := time.Second
+	maxDelay := time.Minute
+
+	for {
+		nc, err = nats.Connect(pm.cfg.NatsAddress)
+		if err == nil {
+			break
+		}
+		pm.logger.Errorf("Error connecting to NATS: %v. Retrying in %v...", err, retryDelay)
+		time.Sleep(retryDelay)
+		retryDelay *= 2
+		if retryDelay > maxDelay {
+			retryDelay = maxDelay
+		}
 	}
+	
 	pm.nc = nc
 	pm.logger.Info("NATS connected")
 	pm.muCfg.Lock()
