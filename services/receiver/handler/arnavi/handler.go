@@ -4,7 +4,6 @@ package arnavi
 import (
 	"bytes"
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/rackov/NavControl/pkg/models"
 	"github.com/rackov/NavControl/services/receiver/internal/protocol"
@@ -49,6 +49,14 @@ type ClientInfo struct {
 	CountPackets int64
 	Multiple     bool
 }
+type ClientArnavi struct {
+	conn          net.Conn
+	authorization bool
+	id            int // номер принятого пакета, если пакет отправлен то =0
+	ImeiId        uint64
+	clientID      string
+	logger        *logrus.Entry
+}
 
 // ArnaviProtocol реализует интерфейс NavigationProtocol для протокола Arnavi
 type ArnaviProtocol struct {
@@ -60,24 +68,29 @@ type ArnaviProtocol struct {
 	connections map[net.Conn]struct{}
 	connMu      sync.Mutex
 
-	logger        *logrus.Entry
-	conn          net.Conn
-	authorization bool
-	id            int // номер принятого пакета, если пакет отправлен то =0
-	ImeiId        uint64
-	nc            models.NatsConf
+	logger *logrus.Entry
+	nc     models.NatsConf
+
+	// Добавим поля для JetStream
+	js          jetstream.JetStream
+	isJetStream bool
+	//  таймер для проверки активности клиентов
+	inactivityTimeout time.Duration
 }
 
 // NewArnaviProtocol создает новый экземпляр протокола Arnavi
-func NewArnaviProtocol(log *logrus.Entry) protocol.NavigationProtocol {
+func NewArnaviProtocol(log *logrus.Entry, isJetStream bool) protocol.NavigationProtocol {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &ArnaviProtocol{
+	ep := &ArnaviProtocol{
 		ctx:         ctx,
 		cancel:      cancel,
 		clients:     make(map[string]ClientInfo),
 		connections: make(map[net.Conn]struct{}),
 		logger:      log,
+		isJetStream: isJetStream,
 	}
+	go ep.checkInactiveClients()
+	return ep
 }
 
 // GetName возвращает имя протокола
@@ -92,10 +105,35 @@ func (a *ArnaviProtocol) Start(port int, nc models.NatsConf) error {
 	if err != nil {
 		return fmt.Errorf("failed to listen on port %d: %v", port, err)
 	}
+	a.nc = nc
 
+	// Инициализация JetStream если включено
+	if a.isJetStream {
+		js, err := jetstream.New(a.nc.Nc)
+		if err != nil {
+			a.logger.Errorf("Failed to initialize JetStream: %v", err)
+			return err
+		}
+		a.js = js
+
+		// Создание потока (stream) если он еще не существует
+		_, err = js.CreateOrUpdateStream(a.ctx, jetstream.StreamConfig{
+			Name:     "NAV_STREAM",
+			Subjects: []string{a.nc.Topic},
+			Storage:  jetstream.FileStorage,
+
+			// MaxConsumers: 1,
+		})
+
+		if err != nil {
+			a.logger.Errorf("Failed to create/update JetStream stream: %v", err)
+			return err
+		}
+
+		a.logger.Info("JetStream initialized successfully")
+	}
 	a.logger.Infof("%s protocol started on port %d", a.GetName(), port)
 
-	// Запускаем обработчик соединений в отдельной горутине
 	go a.handleConnections(nc)
 
 	return nil
@@ -234,25 +272,22 @@ func (a *ArnaviProtocol) handleConnection(conn net.Conn, clientID string, nc mod
 
 	// парсинг данных из протокола Arnavi
 
-	a.conn = conn
-	a.authorization = false
-	a.logger = logcl
+	concl := &ClientArnavi{
+		conn:          conn,
+		authorization: false,
+		clientID:      clientID,
+		id:            0,
+		ImeiId:        0,
+		logger:        logcl,
+	}
+
 	a.nc = nc
-	a.process_connection(clientID)
+	a.process_connection(concl)
 
 }
 
-// type ConClient struct {
-// 	conn          net.Conn
-// 	authorization bool
-// 	log           *logrus.Entry
-// 	id            int // номер принятого пакета, если пакет отправлен то =0
-// 	ImeiId        uint64
-// 	nc            models.NatsConf
-// }
-
-func (sc *ArnaviProtocol) process_connection(clientID string) {
-	local_info := sc.conn.RemoteAddr()
+func (sc *ArnaviProtocol) process_connection(concl *ClientArnavi) {
+	local_info := concl.conn.RemoteAddr()
 	readBuf := make([]byte, 1024)
 	localBuffer := new(bytes.Buffer)
 	var (
@@ -261,18 +296,18 @@ func (sc *ArnaviProtocol) process_connection(clientID string) {
 	)
 	// sc.cursor = 0
 	for {
-		n, err = sc.conn.Read(readBuf)
+		n, err = concl.conn.Read(readBuf)
 		if err != nil {
 			break
 		}
 		if n > 0 {
-			sc.logger.Debugf("dump:\n%s", hex.Dump(readBuf[:n]))
+			concl.logger.Debugf("dump: %X", readBuf[:n])
 			localBuffer.Write(readBuf[:n])
 
-			err = sc.processExistingData(localBuffer, clientID)
+			err = sc.processExistingData(localBuffer, concl)
 
 			if err != nil {
-				sc.logger.Infof("ошибка %v", err)
+				concl.logger.Infof("ошибка %v", err)
 				break
 			}
 		}
@@ -280,12 +315,12 @@ func (sc *ArnaviProtocol) process_connection(clientID string) {
 	sc.logger.Infof("Disconnected from %s\n error: %v", local_info, err)
 
 }
-func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID string) error {
+func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, concl *ClientArnavi) error {
 	var (
 		err error
 	)
-	if !sc.authorization {
-		return sc.Authorization(data)
+	if !concl.authorization {
+		return sc.Authorization(data, concl)
 	}
 
 	for {
@@ -294,7 +329,7 @@ func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID strin
 		if nsize == 0 {
 			return nil
 		}
-		if sc.id == 0 {
+		if concl.id == 0 {
 			if nsize < SizeScan {
 				return nil
 			}
@@ -302,18 +337,19 @@ func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID strin
 			if err = scan.Decode(buf); err != nil {
 				return fmt.Errorf("не удалось просканировать scan %v", err)
 			}
-			sc.id = int(scan.Id)
+			concl.id = int(scan.Id)
+			concl.logger.Debug("Next scan")
 			data.Next(SizeScan)
 			continue
 		}
 
 		if buf[0] == SigPackEnd {
-			if err = sc.finishpacked(); err != nil {
+			if err = sc.finishpacked(concl); err != nil {
 				return fmt.Errorf(" %v", err)
 			}
 			data.Next(1)
-			sc.logger.Debugf("отправлен  пакет подтверждения № %d", sc.id)
-			sc.id = 0
+			concl.logger.Debugf("отправлен  пакет подтверждения № %d", concl.id)
+			concl.id = 0
 			continue
 		}
 		if nsize < 3 {
@@ -323,18 +359,19 @@ func (sc *ArnaviProtocol) processExistingData(data *bytes.Buffer, clientID strin
 		if err = scp.Decode(buf); err != nil {
 			return fmt.Errorf("не удалось декодировать packet %v", err)
 		}
+		concl.logger.Debugf("получен packet %d, динна пакета %d по протоколу %d, первый байт %X", scp.TypeContent, nsize, scp.LengthPacket, buf[0:1])
 		if nsize < (int(scp.LengthPacket) + 8) {
 			return err
 		}
 		// запись пакета
-		err = sc.savePacket(data, clientID)
+		err = sc.savePacket(data, concl)
 		if err != nil {
 			return err
 		}
 		data.Next(int(scp.LengthPacket) + 8)
 	}
 }
-func (sc *ArnaviProtocol) Authorization(data *bytes.Buffer) error {
+func (sc *ArnaviProtocol) Authorization(data *bytes.Buffer, concl *ClientArnavi) error {
 	var (
 		err error
 	)
@@ -355,40 +392,57 @@ func (sc *ArnaviProtocol) Authorization(data *bytes.Buffer) error {
 			return err
 		}
 		data.Next(SizeAuth + 8)
-		sc.authorization = true
+		concl.authorization = true
 		sc.logger.Debugf("Принят расширенный пакет авторизации Id|Imei: %d ", headOne.IdImei)
 
 		return err
 	}
-	sc.ImeiId = headOne.IdImei
-	sc.logger = sc.logger.WithField("imei_id", sc.ImeiId)
-	sc.logger.Debug("Принят пакет авторизации ")
+	concl.ImeiId = headOne.IdImei
+	concl.logger = concl.logger.WithField("imei_id", concl.ImeiId)
+	concl.logger.Debug("Принят пакет авторизации ")
 
-	_, err = sc.conn.Write(AnswerHeader())
+	_, err = concl.conn.Write(AnswerHeader())
 	if err != nil {
 		sc.logger.Errorf("ошибка отправки %v", err)
 	}
 	data.Next(SizeAuth)
-	sc.authorization = true
+	concl.authorization = true
 
 	return err
 }
-func (sc *ArnaviProtocol) finishpacked() error {
+func (sc *ArnaviProtocol) finishpacked(concl *ClientArnavi) error {
 	var err error
-	buf, err := AnswerPacked(sc.id)
+	buf, err := AnswerPacked(concl.id)
 
 	if err != nil {
 		return fmt.Errorf("ошибка формирования подтверждения  %v", err)
 	}
-	if _, err := sc.conn.Write(buf); err != nil {
+	if _, err := concl.conn.Write(buf); err != nil {
 		return fmt.Errorf("ошибка формирования подтверждения  %v", err)
 	}
 
 	return err
 
 }
+func (eg *ArnaviProtocol) sendToNats(msg []byte) error {
+	var err error
 
-func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error {
+	eg.logger.Infof("sendToNats %s", msg)
+	if eg.isJetStream {
+		// Используем JetStream для публикации
+		if eg.js == nil {
+			err = fmt.Errorf("jetStream не инициализирован")
+			return err
+		}
+
+		_, err = eg.js.Publish(eg.ctx, eg.nc.Topic, msg)
+	} else {
+		_, err = eg.nc.Nc.Request(eg.nc.Topic, msg, 2000*time.Millisecond)
+	}
+	return err
+}
+
+func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, concl *ClientArnavi) error {
 	var err error
 	packets := PacketS{}
 	buf := data.Bytes()
@@ -396,17 +450,18 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		return err
 	}
 	record := models.NavRecords{
-		PacketID:   uint32(sc.id),
+		PacketID:   uint32(concl.id),
 		PacketType: 2,
 		RecNav:     make([]models.NavRecord, 1),
 	}
 
 	switch pack := packets.Data.(type) {
 	case *TagsData:
-		record.RecNav[0].Imei = strconv.FormatUint(sc.ImeiId, 10)
+		record.RecNav[0].Imei = strconv.FormatUint(concl.ImeiId, 10)
 		record.RecNav[0].NavigationTimestamp = packets.TimePacket
 		record.RecNav[0].Latitude = uint32(pack.Latitude)
 		record.RecNav[0].Longitude = uint32(pack.Longitude)
+		record.RecNav[0].FlagPos = 129
 		// record.Speed = pack.Speed
 		record.RecNav[0].Course = uint8(pack.Course)
 		record.RecNav[0].ReceivedTimestamp = uint32(time.Now().Unix())
@@ -414,12 +469,12 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		record.RecNav[0].LiquidSensors.Value = pack.LL
 
 	default:
-		sc.logger.Infof("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
+		concl.logger.Infof("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
 		return fmt.Errorf("получен пакет неизвестный тип пакета № %X", packets.TypeContent)
 	}
 	js, _ := json.Marshal(record)
 
-	_, err = sc.nc.Nc.Request(sc.nc.Topic, []byte(js), 2000*time.Millisecond)
+	err = sc.sendToNats(js)
 	if err != nil {
 		sc.logger.Errorf("Nats error send: %v", err.Error())
 		if sc.nc.Nc != nil {
@@ -427,17 +482,50 @@ func (sc *ArnaviProtocol) savePacket(data *bytes.Buffer, clientID string) error 
 		}
 		return err
 	}
-	sc.logger.Info("Данные: ", string(js))
+	concl.logger.Info("Данные: ", string(js))
 
 	sc.clientsMu.Lock()
-	if client, exists := sc.clients[clientID]; exists {
+	if client, exists := sc.clients[concl.clientID]; exists {
 		client.LastTime = int32(time.Now().Unix())
 		client.Device = IdInfo{Tid: 0, Imei: record.RecNav[0].Imei}
 		client.CountPackets++
 		client.Multiple = false
-		sc.clients[clientID] = client
+		sc.clients[concl.clientID] = client
 	}
 	sc.clientsMu.Unlock()
 
 	return err
+}
+
+// метод для проверки неактивных клиентов
+func (a *ArnaviProtocol) checkInactiveClients() {
+	ticker := time.NewTicker(1 * time.Minute) // Проверяем каждую минуту
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-a.ctx.Done():
+			return
+		case <-ticker.C:
+			now := time.Now().Unix()
+			a.clientsMu.Lock()
+
+			// Создаем список неактивных клиентов для отключения
+			var inactiveClients []string
+			for clientID, client := range a.clients {
+				// Если прошло больше 3 минут с момента последней активности
+				if (now - int64(client.LastTime)) > int64(a.inactivityTimeout.Seconds()) {
+					inactiveClients = append(inactiveClients, clientID)
+				}
+			}
+
+			a.clientsMu.Unlock()
+
+			// Отключаем неактивных клиентов
+			for _, clientID := range inactiveClients {
+				a.DisconnectClient(clientID)
+				a.logger.WithField("client", clientID).Info("Client disconnected due to inactivity")
+			}
+		}
+	}
 }

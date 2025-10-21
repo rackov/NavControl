@@ -143,7 +143,7 @@ func (pm *PortManager) reconnect() {
 			retryDelay = maxDelay
 		}
 	}
-	
+
 	pm.nc = nc
 	pm.logger.Info("NATS connected")
 	pm.muCfg.Lock()
@@ -271,7 +271,7 @@ func (pm *PortManager) AddPort(req *proto.PortDefinition) error {
 			"protocol": protocolName,
 			"id_srv":   req.IdReceiver,
 		})
-		protocolInstance = arnavi.NewArnaviProtocol(logparsing)
+		protocolInstance = arnavi.NewArnaviProtocol(logparsing, pm.cfg.IsJetStream)
 	case "EGTS":
 		logparsing := pm.logger.WithFields(map[string]interface{}{
 			"port":     req.PortReceiver,
@@ -384,7 +384,7 @@ func (pm *PortManager) StartPort(portNumber int32) error {
 			"protocol": portInfo.Protocol,
 			"id_srv":   portInfo.IdReceiver,
 		})
-		arnaviProto := arnavi.NewArnaviProtocol(logparsing)
+		arnaviProto := arnavi.NewArnaviProtocol(logparsing, pm.cfg.IsJetStream)
 		protocolInstance = arnaviProto
 	case "EGTS":
 		logparsing := pm.logger.WithFields(map[string]interface{}{
