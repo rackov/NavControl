@@ -285,7 +285,7 @@ func (h *Handler) ChangeActiveWr(c *gin.Context) {
 	for _, write := range list.ListWrite {
 		if int(write.IdWriter) == idWr && int(write.IdSm) == idSm {
 			found = true
-			isActive = write.IsActive
+			isActive = write.Active
 			break
 		}
 	}

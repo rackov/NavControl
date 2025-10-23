@@ -1,8 +1,8 @@
 id_sm = 1
 description = "Сервис записи навигационных данных в БД"
 name = "NavData Writer Service"
-grpc_port = 5053
-metric_port = 9091
+grpc_port = 50004
+metric_port = 9904
 nats_address = "nats://192.168.194.242:4222"
 nats_topic = "navigation"
 size_buf =10000

@@ -28,7 +28,7 @@ message WriteService {
     string passw=8;   
     string status=9;
     string name=10; 
-    bool is_active=11;
+    bool active=11;
     string description=12;
 }
 message RetWrite{

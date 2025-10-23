@@ -19,7 +19,7 @@ else
     echo "Ошибка при остановке сервиса $SERVICE_NAME на $REMOTE_HOST."
 fi
 
-scp /home/vladimir/go/project/NavControl/sh/bin/writer vladimir@192.168.194.242:/home/vladimir/navcontrol/writer
+scp /home/vladimir/go/project/NavControl/sh/bin/writer vladimir@$REMOTE_HOST:/home/vladimir/navcontrol/writer
 #scp /home/vladimir/go/project/NavControl/sh/bin/writer.toml vladimir@192.168.194.242:/home/vladimir/navcontrol/writer
 
 ssh "$USER@$REMOTE_HOST" "sudo systemctl start $SERVICE_NAME"

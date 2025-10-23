@@ -260,14 +260,23 @@ func (w *WrNatsServer) StartSubscription() error {
 	if w.IsJetStream {
 		// Создаем или используем существующий поток JetStream
 		streamName := "NAV_STREAM" // fmt.Sprintf("STREAM_%d_%d", w.IdWriter, w.IdSm)
-		_, err = w.js.AddStream(&nats.StreamConfig{
-			Name:     streamName,
-			Subjects: []string{w.TopicBroker},
-		})
+		_, err := w.js.StreamInfo(streamName)
 		if err != nil {
-			w.Log.Errorf("Failed to add JetStream stream: %v", err)
-			return err
+			// Поток не существует, создаем новый
+			_, err = w.js.AddStream(&nats.StreamConfig{
+				Name:     streamName,
+				Subjects: []string{w.TopicBroker},
+			})
+			if err != nil {
+				w.Log.Errorf("Failed to add JetStream stream: %v", err)
+				return err
+			}
+		} else {
+			// Поток существует, проверяем его конфигурацию
+			w.Log.Infof("Using existing JetStream stream: %s", streamName)
+			// При необходимости можно обновить конфигурацию потока
 		}
+
 		consumer := "writer"
 		w.js.AddConsumer(streamName, &nats.ConsumerConfig{
 			Durable:        consumer,

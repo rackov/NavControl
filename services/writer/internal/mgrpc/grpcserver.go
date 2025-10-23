@@ -93,6 +93,7 @@ func (s *GRPCServer) StartGRPCServer(port int) error {
 		if err := wrNats.Start(); err != nil {
 			s.logger.Errorf("Failed start Writer %d  err: %v", r.IdWriter, err)
 		}
+		s.wrNatsMap[r.IdWriter] = wrNats
 		// s.logger.Debugf("Writer %v started", wrNats)
 	}
 
@@ -120,7 +121,7 @@ func (s *GRPCServer) ListWrites(ctx context.Context, _ *emptypb.Empty) (*proto.R
 			Passw:       wrNats.Passw,
 			Status:      getStatusString(wrNats.DbConnected(), wrNats.NatsConnected()),
 			Name:        wrNats.Name,
-			IsActive:    wrNats.NatsConnected(),
+			Active:      wrNats.NatsConnected(),
 			Description: wrNats.Description,
 		}
 		writeServices = append(writeServices, writeService)
@@ -195,7 +196,7 @@ func (s *GRPCServer) AddWrite(ctx context.Context, writeService *proto.WriteServ
 		Login:       writeService.Login,
 		Passw:       writeService.Passw,
 		Status:      writeService.Status,
-		IsActive:    writeService.IsActive,
+		Active:      writeService.Active,
 		Description: writeService.Description,
 	}, nil
 }
@@ -229,7 +230,7 @@ func (s *GRPCServer) DeleteWrite(ctx context.Context, writeService *proto.WriteS
 		Login:       writeService.Login,
 		Passw:       writeService.Passw,
 		Status:      writeService.Status,
-		IsActive:    writeService.IsActive,
+		Active:      writeService.Active,
 		Description: writeService.Description,
 	}, nil
 }
@@ -258,7 +259,7 @@ func (s *GRPCServer) DownWrite(ctx context.Context, setWrite *proto.SetWrite) (*
 		Login:       wrNats.Login,
 		Passw:       wrNats.Passw,
 		Status:      "closed",
-		IsActive:    true,
+		Active:      true,
 		Description: wrNats.Description,
 	}, nil
 }
@@ -288,7 +289,7 @@ func (s *GRPCServer) UpWrite(ctx context.Context, setWrite *proto.SetWrite) (*pr
 		Login:       wrNats.Login,
 		Passw:       wrNats.Passw,
 		Status:      "open",
-		IsActive:    true,
+		Active:      true,
 		Description: wrNats.Description,
 	}, nil
 }
@@ -336,7 +337,7 @@ func (s *GRPCServer) GetServiceManager(context.Context, *emptypb.Empty) (*proto.
 		Description: s.Cfg.Description,
 		Name:        s.Cfg.Name,
 		PortSm:      int32(s.Cfg.GrpcPort),
-		TypeSm:      "RECEIVER",
+		TypeSm:      "WRITER",
 		IpBroker:    string(parts[0]),
 		PortBroker:  int32(port),
 		TopicBroker: s.Cfg.NatsTopic,
